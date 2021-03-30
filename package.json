@@ -1,0 +1,8 @@
+{
+  "name": "shared-drawing-wall-server",
+  "version": "0.0.1",
+  "description": "server for a shared drawing wall art project by the Shenkar Media and Engineering Lab",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
