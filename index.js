@@ -3,7 +3,7 @@ const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http, {
     cors: {
-        origin: "https://c3d2b69818b0.ngrok.io",
+        origin: " https://shared-drawing.ngrok.io",
         methods: ["GET", "POST"],
         transports: ['websocket', 'polling'],
         credentials: true
@@ -15,6 +15,7 @@ const users = {};
 let clientSketchIndex = 0;
 const alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
 let masterUsername = ""; 
+const port = process.env.PORT || 3000;
 
 // app.get('/', (req, res) => {
 //   res.sendFile('index.html');

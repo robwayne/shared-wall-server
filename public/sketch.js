@@ -83,7 +83,7 @@ const instance = (sketch) => {
 	}
 }
 
-socket = io.connect('http://localhost:3000');
+socket = io.connect('https://shared-drawing.ngrok.io');
 for (let i=0;i<4;i++) {
 	const parentElementID = 'sketch-' + i;
 	const p5Instance = new p5(instance, parentElementID);
