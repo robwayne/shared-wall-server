@@ -2,6 +2,7 @@
   "name": "shared-drawing-wall-server",
   "version": "0.0.1",
   "description": "server for a shared drawing wall art project by the Shenkar Media and Engineering Lab",
+  "main": "index.js",
   "dependencies": {
     "express": "^4.17.1",
     "socket.io": "^4.0.0"
@@ -9,4 +10,6 @@
   "engines": {
     "node": "14.x"
   },
+  "author": "miguerubsk",
+  "license": "ISC"
 }

@@ -3,14 +3,14 @@ const app = express();
 const http = require('http').createServer(app);
 const cors =  {
     cors: {
-        origin: "",
+        origin: "https://midarom.herokuapp.com/",
         methods: ["GET", "POST"],
         transports: ['websocket', 'polling'],
         credentials: true
     },
     allowEIO3: true
 };
-const io = require('socket.io')(http);
+const io = require('socket.io')(http, cors);
 
 const users = {};
 let clientSketchIndex = 0;
@@ -23,7 +23,7 @@ const port = process.env.PORT || 3000;
 // });
 
 app.use(express.static('public'))
-app.set('port', '3000')
+app.set('port', port)
 
 // MARK: SOCKET IO
 io.sockets.on('connection', (socket) => {

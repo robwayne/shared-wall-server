@@ -83,7 +83,7 @@ const instance = (sketch) => {
 	}
 }
 
-socket = io.connect('');
+socket = io.connect('https://midarom.herokuapp.com/');
 for (let i=0;i<4;i++) {
 	const parentElementID = 'sketch-' + i;
 	const p5Instance = new p5(instance, parentElementID);
