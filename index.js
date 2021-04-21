@@ -1,15 +1,16 @@
 const express = require('express');
 const app = express();
 const http = require('http').createServer(app);
-const io = require('socket.io')(http, {
+const cors =  {
     cors: {
-        origin: " https://shared-drawing.ngrok.io",
+        origin: "",
         methods: ["GET", "POST"],
         transports: ['websocket', 'polling'],
         credentials: true
     },
     allowEIO3: true
-});
+};
+const io = require('socket.io')(http);
 
 const users = {};
 let clientSketchIndex = 0;
@@ -63,7 +64,7 @@ const generateMasterUsername = () => {
     console.log(masterUsername)
 };
 
-http.listen(3000, () => {
+http.listen(port, () => {
   generateMasterUsername();
-  console.log('listening on *:3000');
+  console.log('listening on *:', port);
 });
