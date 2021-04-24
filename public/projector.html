@@ -75,32 +75,21 @@
 
       var activeCell = -1;
 
-
-      var projectorMode = false;
-
-
-
       const urlParams = new URLSearchParams(window.location.search);
 
       var vid;
       $(function() {
+        console.log("ready");
         vid = $("#youtubeVid");
 
         var liveLink = urlParams.get('id');
 
-        if(liveLink != null){
+        if(liveLink != ""){
           youtubeId = liveLink;
           embedAddress = "https://www.youtube.com/embed/" + youtubeId +  "?autoplay=1&mute=1&wmode=opaque&showinfo=0&controls=0";
           vid.attr('src', embedAddress);
+          console.log(vid.src);
         }
-
-        var proj = urlParams.get('projector');
-        if(proj != null){
-          if(proj == 1){
-            projectorMode = true;
-          }
-        }
-
 
         $("#toolbar").hide();
 
@@ -138,16 +127,8 @@
         pd = createGraphics(width/5, height/4);
         setCanvasStatus("1111111111");
         cnv.parent('p5Container');
+        setScale(0.5);
 
-        if(projectorMode){
-          $("body").css("background", "#000");
-          $(".buttonGrid").css("display", "none");
-          setScale(1);
-          $(".main").css("margin", 0);
-          $("header").css("display", "none");
-        }else{
-          setScale(0.5);
-        }
 
         // Callback function
         socket.on('mouse', (data) => {
@@ -201,9 +182,6 @@
         image(pg, 0, 0, width, height);
 
 
-        if(projectorMode){
-          return;
-        }
         // user input
         if(mouseIsPressed && activeCell > -1){
 
