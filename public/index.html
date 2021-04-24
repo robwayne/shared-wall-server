@@ -153,18 +153,16 @@
         socket.on('mouse', (data) => {
           // if (canvasIndex && p5Instances[canvasIndex].parent() )
           const {color, x, y, px, py, strokeWidth, canvasIndex} = data;
-          if (sketchParent.id && sketchParent.id.slice(-1) == canvasIndex) {
-            sketch.stroke(color)
-            sketch.strokeWeight(strokeWidth)
-            sketch.line(x, y, px, py)
-          }
+          //if (sketchParent.id && sketchParent.id.slice(-1) == canvasIndex) {
+            pg.stroke(color);
+            pg.strokeWeight(strokeWidth);
+            pg.line(x, y, px, py);
+          //}
         })
 
         // socket.on('sketchIndex', ({sketchIndex}) => {
         //   currentSketchIndex = sketchIndex;
         // })
-
-
 
       }
 
