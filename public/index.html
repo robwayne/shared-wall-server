@@ -217,17 +217,17 @@
           // cellX = width - (cellpositions[activeCell][0]+1)*cellW;
           // cellY = cellpositions[activeCell][1]*cellH;
 
-          pos.x = mouseX;
-          pos.y = mouseY;
+//           pos.x = mouseX;
+//           pos.y = mouseY;
 
-          pd.stroke(color(_color));
-          pd.strokeWeight(_weight);
-          pd.line(pos.x - cellX, pos.y- cellY, pos.px - cellX, pos.py- cellY);
+//           pd.stroke(color(_color));
+//           pd.strokeWeight(_weight);
+//           pd.line(pos.x - cellX, pos.y- cellY, pos.px - cellX, pos.py- cellY);
 
-          pos.px = mouseX;
-          pos.py = mouseY;
+//           pos.px = mouseX;
+//           pos.py = mouseY;
 
-          sendMouse(pos.x,pos.y, pos.px, pos.py, activeCell);
+//           sendMouse(pos.x,pos.y, pos.px, pos.py, activeCell);
         }
 
         if(activeCell > -1){
@@ -245,8 +245,14 @@
           // reset pos
           pos.x = mouseX;
           pos.y = mouseY;
+
+          pd.stroke(color(_color));
+          pd.strokeWeight(_weight);
+          pd.line(pos.x - cellX, pos.y- cellY, pos.px - cellX, pos.py- cellY);
+
           pos.px = mouseX;
           pos.py = mouseY;
+          sendMouse(pos.x,pos.y, pos.px, pos.py, activeCell);
         }
       }
 
