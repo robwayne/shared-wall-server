@@ -34,25 +34,8 @@
       // let currentSketchIndex;
       // let p5Instances = [];
 
-      // Sending data to the socket
-      const sendMouse = (x, y, px, py, canvasIndex) => {
-      	const data = {
-      		x,
-      		y,
-      		px,
-      		py,
-      		_col: _color,
-      		_weight,
-      		canvasIndex,
-      		socketID: socket.id,
-      	}
-
-        console.log("sending", data)
-      	socket.emit('mouse', data)
-      }
-
       const development = false; // process.env.PORT === undefined;
-      const connectURL = development ? "http://localhost:3000" : "https://midarom.herokuapp.com/";
+      const connectURL = development ? "http://localhost:3000" : "https://midarom.herokuapp.com";
       var dispScale = 0.5;
       var pg;
       var pd;
@@ -78,6 +61,23 @@
       var activeCell = -1;
 
       var projectorMode = false;
+	    
+	    // Sending data to the socket
+      const sendMouse = (x, y, px, py, canvasIndex) => {
+      	const data = {
+      		x,
+      		y,
+      		px,
+      		py,
+      		_col: _color,
+      		_weight,
+      		canvasIndex,
+      		socketID: socket.id,
+      	}
+
+        console.log("sending", data)
+      	socket.emit('mouse', data)
+      }
 
 
       const urlParams = new URLSearchParams(window.location.search);
