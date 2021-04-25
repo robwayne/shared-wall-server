@@ -1,46 +1,47 @@
 const express = require('express');
 const app = express();
 const http = require('http').createServer(app);
-const io = require('socket.io')(http, {
+const cors =  {
     cors: {
-        origin: "https://c3d2b69818b0.ngrok.io",
+        origin: "https://midarom.herokuapp.com/",
         methods: ["GET", "POST"],
         transports: ['websocket', 'polling'],
         credentials: true
     },
     allowEIO3: true
-});
+};
+const io = require('socket.io')(http, cors);
 
 const users = {};
 let clientSketchIndex = 0;
 const alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
 let masterUsername = ""; 
+const port = process.env.PORT || 3000;
 
 // app.get('/', (req, res) => {
 //   res.sendFile('index.html');
 // });
 
 app.use(express.static('public'))
-app.set('port', '3000')
+app.set('port', port)
 
 // MARK: SOCKET IO
 io.sockets.on('connection', (socket) => {
     console.log('a user connected');
-    if (clientSketchIndex < 4) {
-        if (!users[socket.id]) {
-            users[socket.id] = socket;
-            socket.on('disconnect', () => {
-                delete users[socket.id];
-            });
-        }
-
-        socket.emit("sketchIndex", {sketchIndex: clientSketchIndex})
-        clientSketchIndex++;
-        
-        socket.on('mouse', (data) => {
-            socket.broadcast.emit('mouse', data)
-        }) 
+    if (!users[socket.id]) {
+        users[socket.id] = socket;
+        socket.on('disconnect', () => {
+            delete users[socket.id];
+        });
     }
+
+    socket.emit("sketchIndex", {sketchIndex: clientSketchIndex})
+    clientSketchIndex++;
+    
+    socket.on('mouse', (data) => {
+        console.log("server receieved", data)
+        socket.broadcast.emit('mouse', data)
+    })
 })
 
 // io.use((socket, next) => {
@@ -62,7 +63,7 @@ const generateMasterUsername = () => {
     console.log(masterUsername)
 };
 
-http.listen(3000, () => {
+http.listen(port, () => {
   generateMasterUsername();
-  console.log('listening on *:3000');
+  console.log('listening on *:', port);
 });
