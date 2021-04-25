@@ -52,7 +52,7 @@
       }
 
       const development = false; // process.env.PORT === undefined;
-      const connectURL = development ? "http://localhost:3000" : "https://midarom.herokuapp.com/"; 
+      const connectURL = development ? "http://localhost:3000" : "https://midarom.herokuapp.com/";
       var dispScale = 0.5;
       var pg;
       var pd;
@@ -155,11 +155,11 @@
         socket.on('mouse', (data) => {
           // if (canvasIndex && p5Instances[canvasIndex].parent() )
           console.log("received: ", data);
-          const {_color, x, y, px, py, strokeWidth, canvasIndex} = data;
+          const {strokeColor, x, y, px, py, strokeWidth, canvasIndex} = data;
           //if (sketchParent.id && sketchParent.id.slice(-1) == canvasIndex) {
-            pg.stroke(color(_color));
-            pg.strokeWeight(strokeWidth);
-            pg.line(x, y, px, py);
+          pg.stroke(color(strokeColor));
+          pg.strokeWeight(parseInt(strokeWidth));
+          pg.line(x, y, px, py);
           //}
         })
 
@@ -269,7 +269,6 @@
 
 
 
-
       function StartDraw(id){
 
         pd.clear();
@@ -358,7 +357,7 @@
 
     <header dir="rtl">
       <h1>רחוקרוב</h1>
-      <h3>בחרו איזור ירוק כדי לצייר בו</h3>
+      <h3>בחרו איזור לצייר בו</h3>
 
     </header>
 
