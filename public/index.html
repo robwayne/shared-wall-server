@@ -155,9 +155,9 @@
         socket.on('mouse', (data) => {
           // if (canvasIndex && p5Instances[canvasIndex].parent() )
 
-          const {_color, x, y, px, py, strokeWidth, canvasIndex} = data;
-          console.log("received: ", data);
-          // pg.stroke(color(_color));
+          const {_col, x, y, px, py, strokeWidth, canvasIndex} = data;
+          console.log("received: ", _col);
+          // pg.stroke(color(_col));
           // pg.strokeWeight(strokeWidth);
           pg.stokeWeight(1);
           pg.stroke(255,0,0);
