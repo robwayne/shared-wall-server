@@ -1,0 +1,166 @@
+html {
+  box-sizing: border-box;
+  font-size: 16px;
+}
+
+*, *:before, *:after {
+  box-sizing: inherit;
+  font-family: 'Alef', 'Arial', sans-serif;
+}
+
+body, h1, h2, h3, h4, h5, h6, p, ol, ul {
+  margin: 0;
+  padding: 0;
+  font-weight: normal;
+}
+
+ol, ul {
+  list-style: none;
+}
+
+header{
+  padding: 10px;
+  border: 2px solid black;
+  position: fixed;
+  z-index: 10000;
+  background: #fff;
+  top: 10px;
+  right: 10px;
+}
+
+#toolbar{
+  padding: 10px;
+  border: 2px solid black;
+  position: fixed;
+  z-index: 10000;
+  background: #fff;
+  top: 120px;
+  right: 10px;
+  width: 54px;
+  height: 200px;
+}
+
+input[type=color]{
+  width: 30px;
+  height: 30px;
+}
+
+/* input[type=range][orient=vertical]
+{
+    -webkit-appearance: slider-vertical;
+    width: 6px;
+    height: 100px;
+    padding: 12px;
+} */
+
+.vrange{
+  margin-top: 50px;
+   transform: rotate(90deg);
+  -moz-transform: rotate(90deg); /*do same for other browsers if required*/
+  -ms-transform: rotate(90deg);
+  position: relative;
+  left: 37px;
+  top: 0px;
+  width: 100px;
+}
+
+
+
+
+.closeBtn{
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  background-image: url(x.png);
+  background-size: 30px 30px;
+  margin: 44px 0px 0 0px;
+}
+
+
+h1{
+  font-size: 32px;
+}
+
+h3{
+  font-size: 21px;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display:block;
+}
+
+body{
+  background:#FFF;
+}
+
+
+.main{
+    position:relative;
+    margin: 150px auto;
+    margin-bottom: 75px;
+
+    width: 1920px;
+    height:1080px;
+}
+
+.overlay{
+  position: absolute;
+  width:100%;
+  height:100%;
+  /* background: rgba(0, 255, 0, 0.4); */
+  z-index: 100;
+}
+
+
+.cellBtn{
+
+}
+
+.free{
+  background: rgba(0,255,0, 0.8);
+  cursor: pointer;
+}
+.free:hover{
+  background: rgba(0, 255,0, 1);
+}
+
+.busy{
+  background: transparent;
+}
+.busy:hover{
+  background:  rgba(255, 0,0, 0.5);
+}
+
+.activeCell{
+  background: transparent;
+  cursor: crosshair;
+}
+.activeCell:hover{
+  background: transparent;
+}
+
+.cellspace{
+  background: transparent;
+}
+
+.buttonGrid{
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  display:grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr 1fr;
+  grid-template-areas:
+}
+#p5Contianer{
+  position: absolute;
+}
+
+
+
+.youtubeContainer{
+  pointer-events:none;
+  z-index: 0;
+}

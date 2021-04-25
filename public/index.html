@@ -1,29 +1,392 @@
 <!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8" />
-  <title>Shenkar Shared Drawing Wall</title>
-  <link rel="stylesheet" href="style.css">
-  <script type="text/javascript" src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
-  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.3/p5.min.js"></script>
-  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.3/addons/p5.dom.min.js"></script>
-  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.3/addons/p5.sound.min.js"></script>
-  <script type="text/javascript" src="sketch.js"></script>
-</head>
-<body>
-  <p>Set stroke color Hex Code</p>
-  <input type="text" name="custom_color" placeholder="#FFFFFF" id="pickcolor" class="call-picker" />
-  <div id="color-holder" class="color-holder call-picker"></div>
-  <button id="color-btn">Apply color</button>
-  <br />
-  <p>Set stroke width</p>
-  <input type="text" name="stroke_width" placeholder="4" id="stroke-width-picker" class="stroke_width_picker" />
-  <button id="stroke-btn">Apply width</button>
-  <div class="sketch-container">
-    <div class="sketch" id="sketch-0"></div>
-    <div class="sketch" id="sketch-1"></div>
-    <div class="sketch" id="sketch-2"></div>
-    <div class="sketch" id="sketch-3"></div>
-  </div>
-</body>
+<html lang="en" dir="rtl">
+  <head>
+    <script type="text/javascript" src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.1/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.1/addons/p5.dom.min.js"></script>
+
+    <script
+			  src="https://code.jquery.com/jquery-3.6.0.min.js"
+			  integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+			  crossorigin="anonymous"></script>
+
+    <meta charset="utf-8">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Alef:wght@400;700&display=swap" rel="stylesheet">
+    <title></title>
+    <link rel="stylesheet" href="index.css">
+
+    <script type="text/javascript">
+
+
+      /* API
+
+      clearDrawings() - to clear the entire canvas
+
+      setAvailableCanvases("0011001010") - accepts a 10 digit string with either 0 or 1 for each available canvas
+
+      requestCanvas(id) - requests to draw on a particular canvas using its id
+
+      */
+
+
+      let socket;
+      // let currentSketchIndex;
+      // let p5Instances = [];
+
+      // Sending data to the socket
+      const sendMouse = (x, y, px, py, canvasIndex) => {
+      	const data = {
+      		x,
+      		y,
+      		px,
+      		py,
+      		_color,
+      		_weight,
+      		canvasIndex,
+      		socketID: socket.id,
+      	}
+
+      	socket.emit('mouse', data)
+      }
+
+
+      var dispScale = 0.5;
+      var pg;
+      var pd;
+
+      var col = [0,0,255];
+      var pos = {x:0, y:0, px:0, py:0, scl:dispScale};
+      var youtubeId = "21X5lGlDOfg";
+      var embedAddress = "https://www.youtube.com/embed/" + youtubeId +  "?autoplay=1&mute=1&wmode=opaque&showinfo=0&controls=0";
+      var canvasStatus = "1111111111";
+
+      var _color = "#000000";
+      var _weight = 1;
+
+      var cellW;
+      var cellH;
+      var cellX;
+      var cellY;
+      var rows = 4;
+      var cols = 5;
+
+      var cellpositions = [[0,0], [2, 0], [4, 0], [1,1], [3,1], [0,2], [2, 2], [4,2], [1,3], [3,3]];
+
+      var activeCell = -1;
+
+
+      var projectorMode = false;
+
+
+
+      const urlParams = new URLSearchParams(window.location.search);
+
+      var vid;
+      $(function() {
+        vid = $("#youtubeVid");
+
+        var liveLink = urlParams.get('id');
+
+        if(liveLink != null){
+          youtubeId = liveLink;
+          embedAddress = "https://www.youtube.com/embed/" + youtubeId +  "?autoplay=1&mute=1&wmode=opaque&showinfo=0&controls=0";
+          vid.attr('src', embedAddress);
+        }
+
+        var proj = urlParams.get('projector');
+        if(proj != null){
+          if(proj == 1){
+            projectorMode = true;
+          }
+        }
+
+
+        $("#toolbar").hide();
+
+        $( "#weightPicker" ).change(function() {
+          _weight = $( this ).val();
+        });
+
+        $( "#colorPicker" ).change(function() {
+          _color = $( this ).val();
+        });
+
+        socket = io.connect("https://midarom.herokuapp.com/");
+
+        // for (let i=0;i<10;i++) {
+        // 	const parentElementID = 'sketch-' + i;
+        // 	const p5Instance = new p5(instance, parentElementID);
+        // 	p5Instances.push(p5Instance);
+        // }
+
+      });
+
+
+
+      function requestCell(id){
+
+        // request the cell ID from the  server
+        // wait for a response and then call:
+        StartDraw(id);
+      }
+
+
+      function setup(){
+        let cnv = createCanvas(1920, 1080);
+        pg = createGraphics(width, height);
+        pd = createGraphics(width/5, height/4);
+        setCanvasStatus("1111111111");
+        cnv.parent('p5Container');
+
+        if(projectorMode){
+          $("body").css("background", "#000");
+          $(".buttonGrid").css("display", "none");
+          setScale(1);
+          $(".main").css("margin", 0);
+          $("header").css("display", "none");
+          $(".youtubeContainer").css("display", "none");
+        }else{
+          setScale(0.5);
+        }
+
+        // Callback function
+        socket.on('mouse', (data) => {
+          // if (canvasIndex && p5Instances[canvasIndex].parent() )
+          const {color, x, y, px, py, strokeWidth, canvasIndex} = data;
+          //if (sketchParent.id && sketchParent.id.slice(-1) == canvasIndex) {
+            pg.stroke(color);
+            pg.strokeWeight(strokeWidth);
+            pg.line(x, y, px, py);
+          //}
+        })
+
+        // socket.on('sketchIndex', ({sketchIndex}) => {
+        //   currentSketchIndex = sketchIndex;
+        // })
+
+      }
+
+      function draw(){
+
+        clear();
+
+        // draw all the canvases
+        cellW = width*1/cols;
+        cellH = height*1/rows;
+
+        var counter = 0;
+        var canvasCounter = 0;
+
+        for(var i = 0; i < rows; i ++){
+          for(var j = 0; j < cols; j ++){
+
+            if(counter%2 == 0 ){
+              push();
+              fill(255);
+              noStroke();
+              if(canvasStatus[canvasCounter] == 1){
+
+              }
+              translate(j*cellW, i*cellH);
+              rect(0,0, cellW, cellH);
+              pop();
+              canvasCounter++;
+            }
+            counter++;
+          }
+        }
+        // the drawing layer
+        image(pg, 0, 0, width, height);
+
+
+        if(projectorMode){
+          return;
+        }
+        // user input
+        if(mouseIsPressed && activeCell > -1){
+
+          // draw active
+          // cellX = width - (cellpositions[activeCell][0]+1)*cellW;
+          // cellY = cellpositions[activeCell][1]*cellH;
+
+          pos.x = mouseX;
+          pos.y = mouseY;
+
+          pd.stroke(color(_color));
+          pd.strokeWeight(_weight);
+          pd.line(pos.x - cellX, pos.y- cellY, pos.px - cellX, pos.py- cellY);
+
+          pos.px = mouseX;
+          pos.py = mouseY;
+
+          pg.image(pd, cellX, cellY);
+          sendMouse(pos.x,pos.y, pos.px, pos.py, activeCell);
+          console.log(pos, activeCell)
+        }
+
+      }
+
+
+      function mousePressed(){
+        if(activeCell > -1){
+          cellX = width - (cellpositions[activeCell][0]+1)*cellW;
+          cellY = cellpositions[activeCell][1]*cellH;
+
+          // reset pos
+          pos.x = mouseX;
+          pos.y = mouseY;
+          pos.px = mouseX;
+          pos.py = mouseY;
+        }
+      }
+
+      function clearDrawings(){
+        pg.clear();
+        pd.clear();
+      }
+
+
+
+      function setScale(scl){
+
+        dispScale = scl;
+
+        $(".main").css("width", 1920*dispScale);
+        $(".main").css("height", 1080*dispScale);
+
+        $("#defaultCanvas0").css("width", 1920*dispScale);
+        $("#defaultCanvas0").css("height", 1080*dispScale);
+
+        vid.css("width", 1920*dispScale);
+        vid.css("height", 1080*dispScale);
+      }
+
+
+
+
+      function StartDraw(id){
+        pd.clear();
+        activeCell = id;
+
+        // scroll to element
+        var elem = $(".cellBtn").eq(id);
+
+        setScale(1.5);
+        $("body").css("width", (1.5*(1920)) + (192*2) );
+
+        var top = elem.offset().top - $(window).height()/4  ;
+        var left = elem.offset().left - $(window).width()/4 ;
+
+        $([document.documentElement, document.body]).animate({
+            scrollTop: top,
+            scrollLeft: left
+        }, 500);
+
+        elem.addClass("activeCell").removeClass("busy").removeClass("free");
+
+        $("#toolbar").show();
+        // show the toolar
+        // allow p5 to draw in that region
+      }
+
+      function closeDrawing(){
+        giveUpCell();
+      }
+
+      function giveUpCell(){
+        // tell the server to give up this cell
+        $(".cellBtn").eq(activeCell).addClass("free");
+        $(".cellBtn").removeClass("activeCell");
+        activeCell = -1;
+        $("body").css("width", "auto" );
+        setScale(0.5);
+        $("#toolbar").hide();
+      }
+
+      // request to draw on cell
+      function cellClick(id){
+        if(activeCell != id){
+          if(activeCell != -1){
+            giveUpCell();
+          }
+          requestCell(id);
+        }
+
+      }
+
+      function setCanvasStatus(str){
+        // if identical skip the whole thing
+        if(str == canvasStatus){
+          return;
+        }
+
+        if(str.length > 10){
+          str = str.slice(10);
+        }else if(str.length < 10){
+          for(var i = 0 ; i < 10 - str.length; i++){
+            str += "0";
+          }
+        }
+        var arr = str.split("");
+
+        for(var i = 0 ; i < 10; i++){
+          arr[i] = parseInt(arr[i]);
+        }
+
+        for(var i = 0 ; i < 10; i++){
+          if(arr[i] == 1){
+            $(".cellBtn").eq(i).addClass("free").removeClass("busy");
+          }else{
+            $(".cellBtn").eq(i).addClass("busy").removeClass("free");
+          }
+        }
+        canvasStatus = str;
+      }
+
+
+    </script>
+  </head>
+  <body>
+
+    <header dir="rtl">
+      <h1>ציור שיתופי</h1>
+      <h3>בחרו איזור ירוק כדי לצייר בו</h3>
+
+    </header>
+
+    <div id="toolbar">
+      <input type="color" id="colorPicker" value="#000000">
+      <input type="range" class="vrange" id="weightPicker" value="1" min="1" max="10">
+      <div class="closeBtn" onclick="closeDrawing()">
+
+      </div>
+    </div>
+
+    <div class="main">
+
+      <div class="overlay">
+        <div class="buttonGrid">
+          <div class="cellBtn free" onclick="cellClick(0)"></div>  <div class="cellspace"></div>
+          <div class="cellBtn free" onclick="cellClick(1)"></div>  <div class="cellspace"></div>
+          <div class="cellBtn free" onclick="cellClick(2)"></div>  <div class="cellspace"></div>
+          <div class="cellBtn free" onclick="cellClick(3)"></div>  <div class="cellspace"></div>
+          <div class="cellBtn free" onclick="cellClick(4)"></div>  <div class="cellspace"></div>
+          <div class="cellBtn free" onclick="cellClick(5)"></div>  <div class="cellspace"></div>
+          <div class="cellBtn free" onclick="cellClick(6)"></div>  <div class="cellspace"></div>
+          <div class="cellBtn free" onclick="cellClick(7)"></div>  <div class="cellspace"></div>
+          <div class="cellBtn free" onclick="cellClick(8)"></div>  <div class="cellspace"></div>
+          <div class="cellBtn free" onclick="cellClick(9)"></div>  <div class="cellspace"></div>
+        </div>
+
+        <div id="p5Container">
+
+        </div>
+
+      </div>
+      <div class="youtubeContainer">
+          <iframe id="youtubeVid" width="1920" height="1080" src="https://www.youtube.com/embed/21X5lGlDOfg?autoplay=1&mute=1&wmode=opaque&showinfo=0&controls=0" autoplay title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" ></iframe>
+      </div>
+    </div>
+  </body>
 </html>
