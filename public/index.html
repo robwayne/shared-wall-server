@@ -75,9 +75,7 @@
 
       var activeCell = -1;
 
-
       var projectorMode = false;
-
 
 
       const urlParams = new URLSearchParams(window.location.search);
@@ -138,6 +136,7 @@
         pd = createGraphics(width/5, height/4);
         setCanvasStatus("1111111111");
         cnv.parent('p5Container');
+        smooth(4);
 
         if(projectorMode){
           $("body").css("background", "#000");
@@ -153,9 +152,9 @@
         // Callback function
         socket.on('mouse', (data) => {
           // if (canvasIndex && p5Instances[canvasIndex].parent() )
-          const {color, x, y, px, py, strokeWidth, canvasIndex} = data;
+          const {_color, x, y, px, py, strokeWidth, canvasIndex} = data;
           //if (sketchParent.id && sketchParent.id.slice(-1) == canvasIndex) {
-            pg.stroke(color);
+            pg.stroke(color(_color));
             pg.strokeWeight(strokeWidth);
             pg.line(x, y, px, py);
           //}
@@ -196,6 +195,7 @@
             counter++;
           }
         }
+
         // the drawing layer
         image(pg, 0, 0, width, height);
 
@@ -220,8 +220,11 @@
           pos.px = mouseX;
           pos.py = mouseY;
 
-          pg.image(pd, cellX, cellY);
           sendMouse(pos.x,pos.y, pos.px, pos.py, activeCell);
+        }
+
+        if(activeCell > -1){
+          image(pd, cellX, cellY);
         }
 
       }
@@ -265,6 +268,7 @@
 
 
       function StartDraw(id){
+
         pd.clear();
         activeCell = id;
 
@@ -294,6 +298,7 @@
       }
 
       function giveUpCell(){
+        pg.image(pd, cellX, cellY);
         // tell the server to give up this cell
         $(".cellBtn").eq(activeCell).addClass("free");
         $(".cellBtn").removeClass("activeCell");
@@ -349,15 +354,15 @@
   <body>
 
     <header dir="rtl">
-      <h1>ציור שיתופי</h1>
+      <h1>רחוקרוב</h1>
       <h3>בחרו איזור ירוק כדי לצייר בו</h3>
 
     </header>
 
     <div id="toolbar">
-      <input type="color" id="colorPicker" value="#000000">
-      <input type="range" class="vrange" id="weightPicker" value="1" min="1" max="10">
-      <div class="closeBtn" onclick="closeDrawing()">
+      <input type="color" id="colorPicker" value="#000000" title="שינוי צבע">
+      <input type="range" class="vrange" id="weightPicker" value="1" min="1" max="10" title="שינוי עובי קו">
+      <div class="closeBtn" onclick="closeDrawing()" title="סגירה">
 
       </div>
     </div>
