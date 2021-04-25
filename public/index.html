@@ -152,12 +152,15 @@
 
         // Callback function
         socket.on('mouse', (data) => {
-          // if (canvasIndex && p5Instances[canvasIndex].parent() )
+          console.log('received', data)
           const {color, x, y, px, py, strokeWidth, canvasIndex} = data;
+          pg.stroke(color);
+          pg.strokeWeight(strokeWidth);
+          pg.line(x, y, px, py);
+          // if (canvasIndex && p5Instances[canvasIndex].parent() )
+         
           //if (sketchParent.id && sketchParent.id.slice(-1) == canvasIndex) {
-            pg.stroke(color);
-            pg.strokeWeight(strokeWidth);
-            pg.line(x, y, px, py);
+       
           //}
         })
 

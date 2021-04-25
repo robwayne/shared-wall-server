@@ -40,6 +40,7 @@ io.sockets.on('connection', (socket) => {
         clientSketchIndex++;
         
         socket.on('mouse', (data) => {
+            console.log("server receieved", data)
             socket.broadcast.emit('mouse', data)
         }) 
     }
