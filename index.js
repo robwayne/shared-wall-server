@@ -16,7 +16,7 @@ const users = {};
 const sentData = {};
 let clientSketchIndex = 0;
 const alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
-let masterUsername = ""; 
+let masterUsername = "";
 const port = process.env.PORT || 3000;
 
 // app.get('/', (req, res) => {
@@ -36,16 +36,16 @@ io.sockets.on('connection', (socket) => {
         });
     }
 
-<<<<<<< HEAD
+
     socket.emit("sketchIndex", {sketchIndex: clientSketchIndex})
     clientSketchIndex++;
-    
+
     socket.on('mouse', (data) => {
         console.log("server receieved", data)
-=======
+
     socket.emit("sentSketchData", sentData)
     clientSketchIndex++;
-    
+
     socket.on('mouse', (data) => {
         const { canvasIndex } = data;
         console.log(data, canvasIndex);
@@ -53,10 +53,9 @@ io.sockets.on('connection', (socket) => {
             sentData[canvasIndex] = [];
         }
         sentData[canvasIndex].push(data);
->>>>>>> 1b8a30a67e84ffddcca8add1dd76c65515f18cab
         socket.broadcast.emit('mouse', data)
     })
-})
+})})
 
 // io.use((socket, next) => {
 //     const username = socket.handshake.auth.username;

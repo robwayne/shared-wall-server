@@ -53,7 +53,6 @@
 
       const development = false; // process.env.PORT === undefined;
       const connectURL = development ? "http://localhost:3000" : "https://midarom.herokuapp.com/";
-      //const connectURL = development ? "http://localhost:3000" : "https://midarom.herokuapp.com/";
       var dispScale = 0.5;
       var pg;
       var pd;
@@ -160,6 +159,8 @@
           console.log("received: ", data);
           // pg.stroke(color(_color));
           // pg.strokeWeight(strokeWidth);
+          pg.stokeWeight(1);
+          pg.stroke(255,0,0);
           pg.line(x, y, px, py);
           //if (sketchParent.id && sketchParent.id.slice(-1) == canvasIndex) {
 
