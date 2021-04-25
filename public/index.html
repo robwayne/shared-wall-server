@@ -52,7 +52,11 @@
       }
 
       const development = false; // process.env.PORT === undefined;
+<<<<<<< HEAD
       const connectURL = development ? "http://localhost:3000" : "https://midarom.herokuapp.com/";
+=======
+      const connectURL = development ? "http://localhost:3000" : "https://midarom.herokuapp.com/";
+>>>>>>> 1b8a30a67e84ffddcca8add1dd76c65515f18cab
       var dispScale = 0.5;
       var pg;
       var pd;
@@ -154,12 +158,14 @@
         // Callback function
         socket.on('mouse', (data) => {
           // if (canvasIndex && p5Instances[canvasIndex].parent() )
+
+          const {_color, x, y, px, py, strokeWidth, canvasIndex} = data;
           console.log("received: ", data);
-          const {strokeColor, x, y, px, py, strokeWidth, canvasIndex} = data;
-          //if (sketchParent.id && sketchParent.id.slice(-1) == canvasIndex) {
-          pg.stroke(color(strokeColor));
-          pg.strokeWeight(parseInt(strokeWidth));
+          // pg.stroke(color(_color));
+          // pg.strokeWeight(strokeWidth);
           pg.line(x, y, px, py);
+          //if (sketchParent.id && sketchParent.id.slice(-1) == canvasIndex) {
+
           //}
         })
 
