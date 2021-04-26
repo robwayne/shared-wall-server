@@ -31,6 +31,8 @@
 
 
       let socket;
+      let totalSent = 0;
+      let totalReceived = 0;
       // let currentSketchIndex;
       // let p5Instances = [];
 
@@ -74,11 +76,10 @@
       		canvasIndex,
       		socketID: socket.id,
       	}
-
-        console.log("sending", data)
+        totalSent++;
+        console.log("sending ", totalSent, data)
       	socket.emit('mouse', data)
       }
-
 
       const urlParams = new URLSearchParams(window.location.search);
 
@@ -155,14 +156,15 @@
         socket.on('mouse', (data) => {
           // if (canvasIndex && p5Instances[canvasIndex].parent() )
 
-          const {_col, x, y, px, py, strokeWidth, canvasIndex} = data;
-          console.log("received: ", _col);
+          const {_col, x, y, px, py, _weight, canvasIndex} = data;
+          const c = _col || "#000000";
+          console.log("received ", ++totalReceived)
           // pg.stroke(color(_col));
           // pg.strokeWeight(strokeWidth);
-          pg.strokeWeight(1);
-          pg.stroke(255,0,0);
-          pg.line(x, y, px, py);
-	  image(pg, 0, 0, width, height);
+          pg.strokeWeight(_weight);
+          pg.stroke(color(c));
+          // pg.line(px - cellX, py-cellY, x-cellX, y-cellY);
+          pg.line(px, py, x, y);
           //if (sketchParent.id && sketchParent.id.slice(-1) == canvasIndex) {
 
           //}
@@ -228,6 +230,7 @@
           pos.px = mouseX;
           pos.py = mouseY;
 
+          
           sendMouse(pos.x,pos.y, pos.px, pos.py, activeCell);
         }
 

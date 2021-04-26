@@ -35,27 +35,20 @@ io.sockets.on('connection', (socket) => {
             delete users[socket.id];
         });
     }
+    // socket.emit("sketchIndex", {sketchIndex: clientSketchIndex})
 
-
-    socket.emit("sketchIndex", {sketchIndex: clientSketchIndex})
-    clientSketchIndex++;
-
-    socket.on('mouse', (data) => {
-        console.log("server receieved", data)
-
-    socket.emit("sentSketchData", sentData)
-    clientSketchIndex++;
+    // socket.emit("sentSketchData", sentData)
+    // clientSketchIndex++;
 
     socket.on('mouse', (data) => {
         const { canvasIndex } = data;
-        console.log(data, canvasIndex);
         if (!sentData[canvasIndex]) {
             sentData[canvasIndex] = [];
         }
         sentData[canvasIndex].push(data);
         socket.broadcast.emit('mouse', data)
-    })
-})})
+    });
+})
 
 // io.use((socket, next) => {
 //     const username = socket.handshake.auth.username;
