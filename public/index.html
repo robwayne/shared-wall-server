@@ -115,6 +115,13 @@
 
         socket = io.connect(connectURL);
 
+        socket.on('availableCells', (data) => {
+
+          console.log(data);
+          // data is the string
+          setCanvasStatus(data);
+        });
+        
         // for (let i=0;i<10;i++) {
         // 	const parentElementID = 'sketch-' + i;
         // 	const p5Instance = new p5(instance, parentElementID);
@@ -181,13 +188,7 @@
           setScale(0.75);
         }
 
-        socket.on('availableCells', (data) => {
 
-          console.log(data);
-          // data is the string
-          setCanvasStatus(data);
-
-        });
 
 
         // Callback function
@@ -389,7 +390,6 @@
         });
 
         activeCell = -1;
-        
       }
 
       // request to draw on cell
@@ -431,6 +431,7 @@
         }
 
         for(var i = 0 ; i < 10; i++){
+          console.log(console.log(typeof arr[i]));
           if(arr[i] == "1"){
             $(".cellBtn").eq(i).addClass("free").removeClass("busy");
           }else{
