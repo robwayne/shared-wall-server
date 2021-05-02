@@ -57,10 +57,9 @@ io.sockets.on('connection', (socket) => {
     
     socket.on('relinquishCell', (data, acknowledgementCallback) => {
         const { socketID, activeCell } = data;
-        acknowledgementCallback("SERVER trying to relinquish" + activeCell + socketID);
+        // acknowledgementCallback("SERVER trying to relinquish" + activeCell + socketID);
         if (socketID && availableCells[activeCell] == '0') {
             const userData = users[socketID];
-            acknowledgementCallback(userData);
             if (userData && userData.activeCell === activeCell) {
                 users[socketID].activeCell = -1;
                 availableCells = replaceAt(availableCells, activeCell, '1');
