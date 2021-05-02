@@ -185,8 +185,7 @@
 
           console.log(data);
           // data is the string
-          canvasStatus = data;
-
+          setCanvasStatus(data);
 
         });
 
@@ -370,19 +369,19 @@
 
       function closeDrawing(){
         giveUpCell();
+        $("body").css("width", "auto" );
+        setScale(0.75);
+        $("#toolbar").hide();
       }
 
       function giveUpCell(){
+
+        console.log("relinquish cell " + activeCell);
         pg.image(pd, cellX, cellY);
         // tell the server to give up this cell
         $(".cellBtn").eq(activeCell).addClass("free");
         $(".cellBtn").removeClass("activeCell");
         activeCell = -1;
-        $("body").css("width", "auto" );
-        setScale(0.75);
-        $("#toolbar").hide();
-
-        console.log("relinquish cell " + activeCell);
 
         socket.emit('relinquishCell', { socketID:socket.id, activeCell}, function(response){
           console.log(response);
