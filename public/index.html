@@ -140,8 +140,26 @@
 
         // request the cell ID from the  server
         // wait for a response and then call:
-        socket.emit('requestCell', { socketID:socket.id, requestedCell });
-        StartDraw(requestedCell);
+        socket.emit('requestCell', { socketID:socket.id, requestedCell }, function(response){
+
+            // response is the string
+            // check the string
+            canvasStatus = response;
+
+
+
+            if(canvasStatus.charAt(requestedCell) == '1'){
+                StartDraw(requestedCell);
+            }else{
+              console.error("incompatible cells at requestCell");
+            }
+
+
+        });
+
+        // wait?
+
+
       }
 
 
@@ -149,7 +167,7 @@
         let cnv = createCanvas(1920, 1080);
         pg = createGraphics(width, height);
         pd = createGraphics(width/5, height/4);
-        setCanvasStatus("1111111111");
+        setCanvasStatus("1110110011");
         cnv.parent('p5Container');
         smooth(4);
 
@@ -163,6 +181,15 @@
         }else{
           setScale(0.75);
         }
+
+        socket.on('availableCells', (data) => {
+
+          // data is the string
+          canvasStatus = data;
+
+
+        });
+
 
         // Callback function
         socket.on('mouse', (data) => {
@@ -271,19 +298,35 @@
       }
 
 
+      $( window ).resize(function() {
+        setScale(dispScale);
+      });
+
 
       function setScale(scl){
 
+        var ww = $( window ).width();
+
         dispScale = scl;
 
-        $(".main").css("width", 1920*dispScale);
-        $(".main").css("height", 1080*dispScale);
+        var w = 1920;
+        var h = 1080;
 
-        $("#defaultCanvas0").css("width", 1920*dispScale);
-        $("#defaultCanvas0").css("height", 1080*dispScale);
+        if(ww < 1280){
+          w *= 0.75;
+          h *= 0.75;
+        }
 
-        vid.css("width", 1920*dispScale);
-        vid.css("height", 1080*dispScale);
+        $("body").css("width", (1.5*(w)) + (192*2) );
+
+        $(".main").css("width", w*dispScale);
+        $(".main").css("height", h*dispScale);
+
+        $("#defaultCanvas0").css("width", w*dispScale);
+        $("#defaultCanvas0").css("height", h*dispScale);
+
+        vid.css("width", w*dispScale);
+        vid.css("height", h*dispScale);
       }
 
 
@@ -297,7 +340,8 @@
         var elem = $(".cellBtn").eq(id);
 
         setScale(1.5);
-        $("body").css("width", (1.5*(1920)) + (192*2) );
+
+
 
         var top = elem.offset().top - $(window).height()/4  ;
         var left = elem.offset().left - $(window).width()/4 ;
@@ -342,7 +386,9 @@
             giveUpCell();
           }
 
-          requestCell(id);
+          if(canvasStatus.charAt(id) == '1'){
+            requestCell(id);
+          }
         }
 
       }
@@ -432,7 +478,7 @@
       </div>
       <div class="youtubeContainer">
           <iframe
-          	id="youtubeVid"
+          	  id="youtubeVid"
               src="https://player.twitch.tv/?channel=kadarcenter&parent=midarom.herokuapp.com&muted=true"
               height="1080"
               width="1920"
