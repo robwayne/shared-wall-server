@@ -381,12 +381,15 @@
         // tell the server to give up this cell
         $(".cellBtn").eq(activeCell).addClass("free");
         $(".cellBtn").removeClass("activeCell");
-        activeCell = -1;
+
 
         socket.emit('relinquishCell', { socketID:socket.id, activeCell}, function(response){
           console.log(response);
           setCanvasStatus(response);
         });
+
+        activeCell = -1;
+        
       }
 
       // request to draw on cell
