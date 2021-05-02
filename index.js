@@ -50,8 +50,8 @@ io.sockets.on('connection', (socket) => {
             const userData = users[socketID];
             if (userData && userData.activeCell === activeCell) {
                 users[socketID].activeCell = -1;
-                availableCells[activeCell] === '1';
-                io.emit('availableCells', availableCells);
+                availableCells[activeCell] = '1';
+                io.emit('availableCells', availableCells); 
             }
         }
     });
