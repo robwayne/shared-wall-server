@@ -139,11 +139,11 @@
 
       function requestCell(requestedCell){
 
-        console.log("request: " + requestedCell.toString());
+        console.log("request: " + requestedCell);
 
         // request the cell ID from the  server
         // wait for a response and then call:
-        socket.emit('requestCell', { socketID:socket.id, requestedCell.toString() }, function(response){
+        socket.emit('requestCell', { socketID:socket.id, requestedCell }, function(response){
 
             // response is the string
             // check the string
