@@ -381,6 +381,9 @@
         $("body").css("width", "auto" );
         setScale(0.75);
         $("#toolbar").hide();
+
+        console.log("relinquish cell " + activeCell);
+
         socket.emit('relinquishCell', { socketID:socket.id, activeCell}, function(response){
           console.log(response);
           setCanvasStatus(response);
