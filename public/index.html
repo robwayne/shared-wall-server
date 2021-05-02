@@ -140,8 +140,9 @@
 
         // request the cell ID from the  server
         // wait for a response and then call:
-        socket.emit('requestCell', { socketID:socket.id, requestedCell }, function(response){
+        socket.emit('requestCell', { socketID : socket.id, requestedCell }, function(response) {
 
+            console.log("response", response)
             // response is the string
             // check the string
             canvasStatus = response;
@@ -183,7 +184,7 @@
         }
 
         socket.on('availableCells', (data) => {
-
+          console.log(" AVAILABLE" , data)
           // data is the string
           canvasStatus = data;
 

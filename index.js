@@ -1,9 +1,11 @@
 const express = require('express');
 const app = express();
 const http = require('http').createServer(app);
+const port = process.env.PORT || 3000;
+const originURL = process.env.PORT != undefined ? "https://midarom.herokuapp.com/" : `http://localhost:${port}`;
 const cors =  {
     cors: {
-        origin: "https://midarom.herokuapp.com/",
+        origin: originURL,
         methods: ["GET", "POST"],
         transports: ['websocket', 'polling'],
         credentials: true
@@ -11,10 +13,9 @@ const cors =  {
     allowEIO3: true
 };
 const io = require('socket.io')(http, cors);
-
 const users = {};
 const sentData = {};
-const port = process.env.PORT || 3000;
+
 let clientSketchIndex = 0;
 const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789';
 let masterUsername = '';
@@ -26,9 +27,9 @@ app.set('port', port)
 // MARK: SOCKET IO
 io.sockets.on('connection', (socket) => {
     console.log('a user connected');
+    socket.emit('availableCells', availableCells);
     if (!users[socket.id]) {
-        users[socket.id] = {socket, activeCell: -1};
-        socket.emit('availableCells', availableCells);
+        users[socket.id] = {socket, activeCell: -1}; 
         socket.on('disconnect', () => {
             delete users[socket.id];
         });
@@ -41,11 +42,11 @@ io.sockets.on('connection', (socket) => {
         }
         sentData[canvasIndex].push(data);
         socket.broadcast.emit('mouse', data)
-    });
+    }); 
     
     socket.on('relinquishCell', (data) => {
         const { socketID, activeCell } = data;
-        if (socketID && activeCell && availableCells[activeCell] === '0') {
+        if (socketID && activeCell && activeCell < availableCells.length && availableCells[activeCell] === '0') {
             const userData = users[socketID];
             if (userData && userData.activeCell === activeCell) {
                 users[socketID].activeCell = -1;
@@ -59,8 +60,8 @@ io.sockets.on('connection', (socket) => {
         const { socketID, requestedCell } = data;
         if (socketID && requestedCell && requestedCell < availableCells.length) {
             if (availableCells[requestedCell] === '1') {
-                users[socketID].activeCell = -1;
-                availableCells[activeCell] === '0';
+                users[socketID].activeCell = requestedCell;
+                availableCells[requestedCell] === '0';
                 acknowledgementCallback(availableCells);
             }
         }
