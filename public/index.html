@@ -127,14 +127,12 @@
       function changeColor(sender, c){
         $(".color").removeClass("selected");
         $(sender).addClass("selected");
-        console.log(c);
         _color = c;
       }
 
       function changeWeight(sender, w){
         $(".line").removeClass("selected");
         $(sender).addClass("selected");
-        console.log(w);
         _weight = w;
       }
 
@@ -148,15 +146,15 @@
             // response is the string
             // check the string
             setCanvasStatus(response);
-
+            // move inside ^
+            if(canvasStatus.charAt(requestedCell) == '1'){
+                StartDraw(requestedCell);
+            }else{
+              console.error("incompatible cells at requestCell");
+            }
         });
 
-        // move inside ^
-        if(canvasStatus.charAt(requestedCell) == '1'){
-            StartDraw(requestedCell);
-        }else{
-          console.error("incompatible cells at requestCell");
-        }
+
 
       }
 
@@ -182,6 +180,7 @@
 
         socket.on('availableCells', (data) => {
 
+          console.log(data);
           // data is the string
           canvasStatus = data;
 
