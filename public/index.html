@@ -56,6 +56,9 @@
       var cellX;
       var cellY;
 
+      var cellTop = 0;
+      var cellLeft = 0;
+
       var rows = 4;
       var cols = 5;
 
@@ -341,13 +344,21 @@
 
         setScale(1.5);
 
-        var top = elem.offset().top - $(window).height()/4  ;
+        var top = elem.offset().top - $(window).height()/4 ;
         var left = elem.offset().left - $(window).width()/4 ;
 
-        $([document.documentElement, document.body]).animate({
+        $([document.documentElement]).animate({
+            scrollTop: cellTop,
+            scrollLeft: cellLeft
+        }, 0);
+
+        $([document.documentElement]).animate({
             scrollTop: top,
             scrollLeft: left
-        }, 20);
+        }, 500);
+
+        cellTop = top;
+        cellLeft = left;
 
         elem.addClass("activeCell").removeClass("busy").removeClass("free");
 
@@ -387,7 +398,6 @@
           if(canvasStatus.charAt(id) == '1'){
             requestCell(id);
           }
-
         }
 
       }
@@ -483,7 +493,7 @@
               width="1920"
               allowfullscreen="false">
           </iframe> -->
-          <iframe id="youtubeVid" width="1920" height="1080" src="https://www.youtube.com/embed/live_stream?channel=UCaUFRz-HT2Rne3KvIdU-04A?autoplay=1&mute=1&wmode=opaque&showinfo=0&controls=0" autoplay title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" ></iframe>
+          <iframe id="youtubeVid" width="1920" height="1080" src="https://www.youtube.com/embed/live_stream?channel=UCaUFRz-HT2Rne3KvIdU-04A&autoplay=1&mute=1&wmode=opaque&showinfo=0&controls=0" autoplay title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" ></iframe>
       </div>
     </div>
   </body>
