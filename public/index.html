@@ -36,7 +36,7 @@
       // let currentSketchIndex;
       // let p5Instances = [];
 
-      const development = false ; // process.env.PORT === undefined;
+      const development = false; // process.env.PORT === undefined;
       const connectURL = development ? "http://localhost:3000" : "https://midarom.herokuapp.com";
       var dispScale = 0.5;
       var pg;
@@ -143,9 +143,8 @@
 
         // request the cell ID from the  server
         // wait for a response and then call:
-        socket.emit('requestCell', { socketID : socket.id, requestedCell }, function(response) {
+        socket.emit('requestCell', { socketID:socket.id, requestedCell }, function(response){
 
-            console.log("response", response)
             // response is the string
             // check the string
             setCanvasStatus(response);
@@ -182,7 +181,7 @@
         }
 
         socket.on('availableCells', (data) => {
-          console.log(" AVAILABLE" , data)
+
           // data is the string
           canvasStatus = data;
 
