@@ -61,7 +61,7 @@ io.sockets.on('connection', (socket) => {
         if (socketID && requestedCell && requestedCell < availableCells.length) {
             if (availableCells[requestedCell] === '1') {
                 users[socketID].activeCell = requestedCell;
-                availableCells[requestedCell] === '0';
+                availableCells[requestedCell] = '0';
                 acknowledgementCallback(availableCells);
             }
         }
