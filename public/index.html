@@ -139,20 +139,18 @@
 
       function requestCell(requestedCell){
 
-        console.log("request: " + requestedCell);
+        console.log("request: " + requestedCell.toString());
 
         // request the cell ID from the  server
         // wait for a response and then call:
-        socket.emit('requestCell', { socketID:socket.id, requestedCell }, function(response){
+        socket.emit('requestCell', { socketID:socket.id, requestedCell.toString() }, function(response){
 
             // response is the string
             // check the string
-            console.log("response: " + response);
-            console.log("responseAt: " + response.charAt(requestedCell));
             setCanvasStatus(response);
             console.log("responseAt: " + canvasStatus.charAt(requestedCell));
             // move inside ^
-            if(response.charAt(requestedCell) == '1'){
+            if(canvasStatus.charAt(requestedCell) == '1'){
                 StartDraw(requestedCell);
             }else{
               console.error("incompatible cells at requestCell");
@@ -325,7 +323,6 @@
           $("body").css("width", (1.5*(1920)) + (192*2) );
         }
 
-
         $(".main").css("width", w*dispScale);
         $(".main").css("height", h*dispScale);
 
@@ -426,7 +423,7 @@
         }
 
         for(var i = 0 ; i < 10; i++){
-          if(arr[i] == 1){
+          if(arr[i] == "1"){
             $(".cellBtn").eq(i).addClass("free").removeClass("busy");
           }else{
             $(".cellBtn").eq(i).addClass("busy").removeClass("free");
