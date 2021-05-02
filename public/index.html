@@ -141,7 +141,7 @@
         // request the cell ID from the  server
         // wait for a response and then call:
         socket.emit('requestCell', { socketID:socket.id, requestedCell });
-        StartDraw(id);
+        StartDraw(requestedCell);
       }
 
 
@@ -341,7 +341,7 @@
           if(activeCell != -1){
             giveUpCell();
           }
-          
+
           requestCell(id);
         }
 
