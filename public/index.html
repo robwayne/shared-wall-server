@@ -148,9 +148,11 @@
             // response is the string
             // check the string
             console.log("response: " + response);
+            console.log("responseAt: " + response.charAt(requestedCell));
             setCanvasStatus(response);
+            console.log("responseAt: " + canvasStatus.charAt(requestedCell));
             // move inside ^
-            if(canvasStatus.charAt(requestedCell) == '1'){
+            if(response.charAt(requestedCell) == '1'){
                 StartDraw(requestedCell);
             }else{
               console.error("incompatible cells at requestCell");
