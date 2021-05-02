@@ -266,7 +266,14 @@
           pd.strokeWeight(_weight);
           pd.line(pos.x - cellX, pos.y- cellY, pos.px - cellX, pos.py- cellY);
           console.log(pos.x, pos.px);
-          sendMouse(pos.x, pos.y, pos.px, pos.py, activeCell);
+
+          if(pos.x-cellX > 0 && pos.x-cellX < pd.width &&
+             pos.px-cellX > 0 && pos.px-cellX < pd.width &&
+             pos.y-cellY > 0 && pos.y-cellY < pd.height &&
+             pos.py-cellY > 0 && pos.py-cellY < pd.height)
+             {
+               sendMouse(pos.x, pos.y, pos.px, pos.py, activeCell);
+             }
 
           pos.px = mouseX;
           pos.py = mouseY;
