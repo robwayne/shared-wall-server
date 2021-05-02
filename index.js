@@ -50,7 +50,7 @@ io.sockets.on('connection', (socket) => {
             const userData = users[socketID];
             if (userData && userData.activeCell === activeCell) {
                 users[socketID].activeCell = -1;
-                availableCells[activeCell] === '1';
+                availableCells[activeCell] = '1';
                 io.emit('availableCells', availableCells);
             }
         }
@@ -62,7 +62,7 @@ io.sockets.on('connection', (socket) => {
             if (availableCells[requestedCell] === '1') {
                 users[socketID].activeCell = requestedCell;
                 availableCells[requestedCell] = '0';
-                acknowledgementCallback(availableCells);
+                acknowledgementCallback('availableCells');
             }
         }
     });
