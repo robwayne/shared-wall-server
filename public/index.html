@@ -144,21 +144,16 @@
 
             // response is the string
             // check the string
-            canvasStatus = response;
-
-
-
-            if(canvasStatus.charAt(requestedCell) == '1'){
-                StartDraw(requestedCell);
-            }else{
-              console.error("incompatible cells at requestCell");
-            }
-
+            setCanvasStatus(response);
 
         });
 
-        // wait?
-
+        // move inside ^
+        if(canvasStatus.charAt(requestedCell) == '1'){
+            StartDraw(requestedCell);
+        }else{
+          console.error("incompatible cells at requestCell");
+        }
 
       }
 
@@ -167,7 +162,7 @@
         let cnv = createCanvas(1920, 1080);
         pg = createGraphics(width, height);
         pd = createGraphics(width/5, height/4);
-        setCanvasStatus("1110110011");
+        // setCanvasStatus("1110110011");
         cnv.parent('p5Container');
         smooth(4);
 
@@ -305,6 +300,8 @@
 
       function setScale(scl){
 
+
+
         var ww = $( window ).width();
 
         dispScale = scl;
@@ -317,7 +314,10 @@
           h *= 0.75;
         }
 
-        $("body").css("width", (1.5*(w)) + (192*2) );
+        if(scl == 1.5){
+          $("body").css("width", (1.5*(1920)) + (192*2) );
+        }
+
 
         $(".main").css("width", w*dispScale);
         $(".main").css("height", h*dispScale);
@@ -341,15 +341,13 @@
 
         setScale(1.5);
 
-
-
         var top = elem.offset().top - $(window).height()/4  ;
         var left = elem.offset().left - $(window).width()/4 ;
 
         $([document.documentElement, document.body]).animate({
             scrollTop: top,
             scrollLeft: left
-        }, 500);
+        }, 20);
 
         elem.addClass("activeCell").removeClass("busy").removeClass("free");
 
@@ -389,6 +387,7 @@
           if(canvasStatus.charAt(id) == '1'){
             requestCell(id);
           }
+
         }
 
       }
@@ -477,14 +476,14 @@
 
       </div>
       <div class="youtubeContainer">
-          <iframe
+          <!-- <iframe
           	  id="youtubeVid"
               src="https://player.twitch.tv/?channel=kadarcenter&parent=midarom.herokuapp.com&muted=true"
               height="1080"
               width="1920"
               allowfullscreen="false">
-          </iframe>
-          <!-- <iframe id="youtubeVid" width="1920" height="1080" src="https://www.youtube.com/embed/21X5lGlDOfg?autoplay=1&mute=1&wmode=opaque&showinfo=0&controls=0" autoplay title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" ></iframe> -->
+          </iframe> -->
+          <iframe id="youtubeVid" width="1920" height="1080" src="https://www.youtube.com/embed/live_stream?channel=UCaUFRz-HT2Rne3KvIdU-04A?autoplay=1&mute=1&wmode=opaque&showinfo=0&controls=0" autoplay title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" ></iframe>
       </div>
     </div>
   </body>
