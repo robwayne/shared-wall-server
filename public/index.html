@@ -381,7 +381,10 @@
         $("body").css("width", "auto" );
         setScale(0.75);
         $("#toolbar").hide();
-        socket.emit('relinquishCell', { socketID:socket.id, activeCell });
+        socket.emit('relinquishCell', { socketID:socket.id, activeCell}, function(response){
+          console.log(response);
+          setCanvasStatus(response);
+        });
       }
 
       // request to draw on cell
