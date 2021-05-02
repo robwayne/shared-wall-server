@@ -82,6 +82,10 @@
       	socket.emit('mouse', data)
       }
 
+
+
+
+
       const urlParams = new URLSearchParams(window.location.search);
 
       var vid;
@@ -132,10 +136,11 @@
       }
 
 
-      function requestCell(id){
+      function requestCell(requestedCell){
 
         // request the cell ID from the  server
         // wait for a response and then call:
+        socket.emit('requestCell', { socketID:socket.id, requestedCell });
         StartDraw(id);
       }
 
@@ -233,7 +238,7 @@
           pd.stroke(color(_color));
           pd.strokeWeight(_weight);
           pd.line(pos.x - cellX, pos.y- cellY, pos.px - cellX, pos.py- cellY);
-
+          console.log(pos.x, pos.px);
           sendMouse(pos.x, pos.y, pos.px, pos.py, activeCell);
 
           pos.px = mouseX;
@@ -322,14 +327,21 @@
         $("body").css("width", "auto" );
         setScale(0.75);
         $("#toolbar").hide();
+        socket.emit('relinquishCell', { socketID:socket.id, activeCell });
       }
 
       // request to draw on cell
       function cellClick(id){
+
+        // only allow available ones
+        // test cell using the string
+
         if(activeCell != id){
+
           if(activeCell != -1){
             giveUpCell();
           }
+          
           requestCell(id);
         }
 
