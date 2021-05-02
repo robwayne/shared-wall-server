@@ -14,14 +14,11 @@ const io = require('socket.io')(http, cors);
 
 const users = {};
 const sentData = {};
-let clientSketchIndex = 0;
-const alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
-let masterUsername = "";
 const port = process.env.PORT || 3000;
-
-// app.get('/', (req, res) => {
-//   res.sendFile('index.html');
-// });
+let clientSketchIndex = 0;
+const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789';
+let masterUsername = '';
+let availableCells = '1111111111'; 
 
 app.use(express.static('public'))
 app.set('port', port)
@@ -30,15 +27,12 @@ app.set('port', port)
 io.sockets.on('connection', (socket) => {
     console.log('a user connected');
     if (!users[socket.id]) {
-        users[socket.id] = socket;
+        users[socket.id] = {socket, activeCell: -1};
+        socket.emit('availableCells', availableCells);
         socket.on('disconnect', () => {
             delete users[socket.id];
         });
     }
-    // socket.emit("sketchIndex", {sketchIndex: clientSketchIndex})
-
-    // socket.emit("sentSketchData", sentData)
-    // clientSketchIndex++;
 
     socket.on('mouse', (data) => {
         const { canvasIndex } = data;
@@ -47,6 +41,29 @@ io.sockets.on('connection', (socket) => {
         }
         sentData[canvasIndex].push(data);
         socket.broadcast.emit('mouse', data)
+    });
+    
+    socket.on('relinquishCell', (data) => {
+        const { socketID, activeCell } = data;
+        if (socketID && activeCell && availableCells[activeCell] === '0') {
+            const userData = users[socketID];
+            if (userData && userData.activeCell === activeCell) {
+                users[socketID].activeCell = -1;
+                availableCells[activeCell] === '1';
+                io.emit('availableCells', availableCells);
+            }
+        }
+    });
+    
+    socket.on('requestCell', (data, acknowledgementCallback) => {
+        const { socketID, requestedCell } = data;
+        if (socketID && requestedCell && requestedCell < availableCells.length) {
+            if (availableCells[requestedCell] === '1') {
+                users[socketID].activeCell = -1;
+                availableCells[activeCell] === '0';
+                acknowledgementCallback(availableCells);
+            }
+        }
     });
 })
 
