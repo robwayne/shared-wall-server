@@ -438,8 +438,7 @@
         }
 
         for(var i = 0 ; i < 10; i++){
-          console.log(console.log(typeof arr[i]));
-          if(arr[i] == "1"){
+          if(arr[i] == 1){
             $(".cellBtn").eq(i).addClass("free").removeClass("busy");
           }else{
             $(".cellBtn").eq(i).addClass("busy").removeClass("free");
