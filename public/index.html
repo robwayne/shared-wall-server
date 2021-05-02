@@ -234,11 +234,10 @@
           pd.strokeWeight(_weight);
           pd.line(pos.x - cellX, pos.y- cellY, pos.px - cellX, pos.py- cellY);
 
+          sendMouse(pos.x, pos.y, pos.px, pos.py, activeCell);
+
           pos.px = mouseX;
           pos.py = mouseY;
-
-
-          sendMouse(pos.x,pos.y, pos.px, pos.py, activeCell);
         }
 
         if(activeCell > -1){
