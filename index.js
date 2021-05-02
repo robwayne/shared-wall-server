@@ -12,6 +12,7 @@ const cors =  {
     },
     allowEIO3: true
 };
+
 const io = require('socket.io')(http, cors);
 const users = {};
 const sentData = {};
@@ -23,6 +24,12 @@ let availableCells = '1111111111';
 
 app.use(express.static('public'))
 app.set('port', port)
+
+const replaceAt = (str, index, char) => {
+    return str.substr(0, index) + char + str.substr(index + char.length);
+}
+
+console.log(replaceAt(availableCells, 3, '0')); 
 
 // MARK: SOCKET IO
 io.sockets.on('connection', (socket) => {
@@ -50,7 +57,7 @@ io.sockets.on('connection', (socket) => {
             const userData = users[socketID];
             if (userData && userData.activeCell === activeCell) {
                 users[socketID].activeCell = -1;
-                availableCells[activeCell] = '1';
+                availableCells = replaceAt(availableCells, activeCell, '1');
                 io.emit('availableCells', availableCells); 
             }
         }
@@ -59,10 +66,10 @@ io.sockets.on('connection', (socket) => {
     socket.on('requestCell', (data, acknowledgementCallback) => {
         const { socketID, requestedCell } = data;
         if (socketID && requestedCell && requestedCell < availableCells.length) {
-            if (availableCells[requestedCell] === '1') {
+            if (availableCells.charAt(requestedCell) == '1') {
                 users[socketID].activeCell = requestedCell;
-                availableCells[requestedCell] = '0';
                 acknowledgementCallback(availableCells);
+                availableCells = replaceAt(availableCells, requestedCell, '0');
             }
         }
     });
