@@ -55,7 +55,7 @@ io.sockets.on('connection', (socket) => {
         socket.broadcast.emit('mouse', data)
     }); 
     
-    socket.on('relinquishCell', (data, callback) => {
+    socket.on('relinquishCell', (data, acknowledgementCallback) => {
         const { socketID, activeCell } = data;
         if (socketID && activeCell >=0 && activeCell < availableCells.length && availableCells[activeCell] === '0') {
             const userData = users[socketID];
