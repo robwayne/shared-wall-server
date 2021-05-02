@@ -55,6 +55,7 @@
       var cellH;
       var cellX;
       var cellY;
+
       var rows = 4;
       var cols = 5;
 
@@ -63,7 +64,7 @@
       var activeCell = -1;
 
       var projectorMode = false;
-	    
+
 	    // Sending data to the socket
       const sendMouse = (x, y, px, py, canvasIndex) => {
       	const data = {
@@ -105,14 +106,6 @@
 
         $("#toolbar").hide();
 
-        $( "#weightPicker" ).change(function() {
-          _weight = $( this ).val();
-        });
-
-        $( "#colorPicker" ).change(function() {
-          _color = $( this ).val();
-        });
-
         socket = io.connect(connectURL);
 
         // for (let i=0;i<10;i++) {
@@ -123,6 +116,20 @@
 
       });
 
+
+      function changeColor(sender, c){
+        $(".color").removeClass("selected");
+        $(sender).addClass("selected");
+        console.log(c);
+        _color = c;
+      }
+
+      function changeWeight(sender, w){
+        $(".line").removeClass("selected");
+        $(sender).addClass("selected");
+        console.log(w);
+        _weight = w;
+      }
 
 
       function requestCell(id){
@@ -149,7 +156,7 @@
           $("header").css("display", "none");
           $(".youtubeContainer").css("display", "none");
         }else{
-          setScale(0.5);
+          setScale(0.75);
         }
 
         // Callback function
@@ -230,7 +237,7 @@
           pos.px = mouseX;
           pos.py = mouseY;
 
-          
+
           sendMouse(pos.x,pos.y, pos.px, pos.py, activeCell);
         }
 
@@ -314,7 +321,7 @@
         $(".cellBtn").removeClass("activeCell");
         activeCell = -1;
         $("body").css("width", "auto" );
-        setScale(0.5);
+        setScale(0.75);
         $("#toolbar").hide();
       }
 
@@ -370,10 +377,24 @@
     </header>
 
     <div id="toolbar">
-      <input type="color" id="colorPicker" value="#000000" title="שינוי צבע">
-      <input type="range" class="vrange" id="weightPicker" value="1" min="1" max="10" title="שינוי עובי קו">
-      <div class="closeBtn" onclick="closeDrawing()" title="סגירה">
 
+      <div class="toolbarPane">
+        <img class="toolbarBtn color" src="img/red.png" alt="red" onclick="changeColor(this, '#FF0000')">
+        <img class="toolbarBtn color" src="img/green.png" alt="green"  onclick="changeColor(this, '#00FF00')">
+        <img class="toolbarBtn color" src="img/blue.png" alt="blue"  onclick="changeColor(this, '#0000FF')">
+        <img class="toolbarBtn color selected" src="img/black.png" alt="black"  onclick="changeColor(this, '#000000')">
+        <img class="toolbarBtn color" src="img/white.png" alt="white"  onclick="changeColor(this, '#FFFFFF')">
+      </div>
+
+      <div class="toolbarPane lines">
+        <img class="toolbarBtn line selected" src="img/S.png" alt="S" onclick="changeWeight(this, 1)">
+        <img class="toolbarBtn line" src="img/M.png" alt="M" onclick="changeWeight(this, 5)">
+        <img class="toolbarBtn line" src="img/L.png" alt="L"  onclick="changeWeight(this, 10)">
+      </div>
+
+      <div class="toolbarPane">
+        <!-- <img class="toolbarBtn" src="img/in.png" alt="zoom in" onclick="setScale(1.5)"> -->
+        <img class="toolbarBtn" src="img/out.png" alt="zoom out" onclick="closeDrawing()">
       </div>
     </div>
 
@@ -399,7 +420,14 @@
 
       </div>
       <div class="youtubeContainer">
-          <iframe id="youtubeVid" width="1920" height="1080" src="https://www.youtube.com/embed/21X5lGlDOfg?autoplay=1&mute=1&wmode=opaque&showinfo=0&controls=0" autoplay title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" ></iframe>
+          <iframe
+          	id="youtubeVid"
+              src="https://player.twitch.tv/?channel=kadarcenter&parent=https://midarom.herokuapp.com/&muted=true"
+              height="1080"
+              width="1920"
+              allowfullscreen="false">
+          </iframe>
+          <!-- <iframe id="youtubeVid" width="1920" height="1080" src="https://www.youtube.com/embed/21X5lGlDOfg?autoplay=1&mute=1&wmode=opaque&showinfo=0&controls=0" autoplay title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" ></iframe> -->
       </div>
     </div>
   </body>

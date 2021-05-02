@@ -29,43 +29,62 @@ header{
 }
 
 #toolbar{
-  padding: 10px;
+  padding: 5px;
   border: 2px solid black;
   position: fixed;
   z-index: 10000;
   background: #fff;
-  top: 120px;
+  top: 140px;
   right: 10px;
-  width: 54px;
-  height: 250px;
+  width: 66px;
 }
 
-input[type=color]{
+
+.toolbarBtn{
+  display: block;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.toolbarBtn.selected{
+  border: 2px solid blue;
+}
+
+.toolbarBtn:hover{
+  border: 2px solid green;
+}
+
+.toolbarPane{
+  padding: 5px;
+  border: 1px solid black;
+  border-radius: 4px;
+}
+.toolbarPane.lines{
+  margin: 20px 0;
+}
+
+/* input[type=color]{
   width: 30px;
   height: 30px;
 }
 
-/* input[type=range][orient=vertical]
+input[type=range][orient=vertical]
 {
     -webkit-appearance: slider-vertical;
     width: 6px;
     height: 100px;
     padding: 12px;
-} */
-
+}
 .vrange{
   margin-top: 50px;
    transform: rotate(90deg);
-  -moz-transform: rotate(90deg); /*do same for other browsers if required*/
+  -moz-transform: rotate(90deg);
   -ms-transform: rotate(90deg);
   position: relative;
   left: 37px;
   top: 0px;
   width: 100px;
 }
-
-
-
 
 .closeBtn{
   width: 30px;
@@ -74,7 +93,7 @@ input[type=color]{
   background-image: url(x.png);
   background-size: 30px 30px;
   margin: 95px 0px 0 0px;
-}
+} */
 
 
 h1{
@@ -151,7 +170,7 @@ body{
   width: 100%;
   height: 100%;
   display:grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr ;
   grid-template-rows: 1fr 1fr 1fr 1fr;
   grid-template-areas:
 }
