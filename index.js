@@ -38,6 +38,10 @@ io.sockets.on('connection', (socket) => {
     if (!users[socket.id]) {
         users[socket.id] = {socket, activeCell: -1}; 
         socket.on('disconnect', () => {
+            const { activeCell } = users[socket.id];
+            if (activeCell >= 0) {
+                availableCells = replaceAt(availableCells, activeCell, '1');
+            }
             delete users[socket.id];
         });
     }
@@ -51,13 +55,14 @@ io.sockets.on('connection', (socket) => {
         socket.broadcast.emit('mouse', data)
     }); 
     
-    socket.on('relinquishCell', (data) => {
+    socket.on('relinquishCell', (data, callback) => {
         const { socketID, activeCell } = data;
-        if (socketID && activeCell && activeCell < availableCells.length && availableCells[activeCell] === '0') {
+        if (socketID && activeCell >=0 && activeCell < availableCells.length && availableCells[activeCell] === '0') {
             const userData = users[socketID];
             if (userData && userData.activeCell === activeCell) {
                 users[socketID].activeCell = -1;
                 availableCells = replaceAt(availableCells, activeCell, '1');
+                acknowledgementCallback('ok');
                 io.emit('availableCells', availableCells); 
             }
         }
@@ -65,7 +70,7 @@ io.sockets.on('connection', (socket) => {
     
     socket.on('requestCell', (data, acknowledgementCallback) => {
         const { socketID, requestedCell } = data;
-        if (socketID && requestedCell && requestedCell < availableCells.length) {
+        if (socketID && requestedCell >= 0 && requestedCell < availableCells.length) {
             if (availableCells.charAt(requestedCell) == '1') {
                 users[socketID].activeCell = requestedCell;
                 acknowledgementCallback(availableCells);
