@@ -6,7 +6,6 @@
   "dependencies": {
     "express": "^4.17.1",
     "express-validator": "^6.11.1",
-    "formidable": "^1.2.2",
     "socket.io": "^4.0.0"
   },
   "engines": {

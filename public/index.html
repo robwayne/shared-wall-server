@@ -36,7 +36,7 @@
       // let currentSketchIndex;
       // let p5Instances = [];
 
-      const development = false; // process.env.PORT === undefined;
+      const development = true; // process.env.PORT === undefined;
       const connectURL = development ? "http://localhost:3000" : "https://midarom.herokuapp.com";
       var dispScale = 0.5;
       var pg;
@@ -207,6 +207,16 @@
           //if (sketchParent.id && sketchParent.id.slice(-1) == canvasIndex) {
 
           //}
+        })
+
+        socket.on('msgFromController', ({ controllerMessage }) => {
+          if (controllerMessage) {
+            const msg = controllerMessage.trim();
+            console.log("message from MASTER", msg);
+            alert("MESSAGE " + msg);
+          } else {
+            ackCallback("error could not send message");
+          }
         })
 
         // socket.on('sketchIndex', ({sketchIndex}) => {

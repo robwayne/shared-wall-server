@@ -98,6 +98,7 @@
       var youtubeId = "21X5lGlDOfg";
       var embedAddress = "https://www.youtube.com/embed/" + youtubeId +  "?autoplay=1&mute=1&wmode=opaque&showinfo=0&controls=0";
       var canvasStatus = "1111111111";
+      let username;
 
       var _color = "#000000";
       var _weight = 1;
@@ -115,29 +116,13 @@
 
       var projectorMode = false;
 	    
-	    // Sending data to the socket
-      const sendMouse = (x, y, px, py, canvasIndex) => {
-      	const data = {
-      		x,
-      		y,
-      		px,
-      		py,
-      		_col: _color,
-      		_weight,
-      		canvasIndex,
-      		socketID: socket.id,
-      	}
-        totalSent++;
-        console.log("sending ", totalSent, data)
-      	socket.emit('mouse', data)
-      }
-
       const urlParams = new URLSearchParams(window.location.search);
 
       var vid;
       $(function() {
         vid = $("#youtubeVid");
 
+        username = urlParams.get('mu');
         var liveLink = urlParams.get('id');
 
         if(liveLink != null){
@@ -153,33 +138,22 @@
           }
         }
 
-
         $("#masterToolbar").hide();
-
-        $( "#weightPicker" ).change(function() {
-          _weight = $( this ).val();
-        });
-
-        $( "#colorPicker" ).change(function() {
-          _color = $( this ).val();
-        });
-
         socket = io.connect(connectURL);
 
-        // for (let i=0;i<10;i++) {
-        // 	const parentElementID = 'sketch-' + i;
-        // 	const p5Instance = new p5(instance, parentElementID);
-        // 	p5Instances.push(p5Instance);
-        // }
-
+        $("#clientMsgForm").submit((event) => {
+          const message  = $('#msgInput').val();
+          console.log("message", message);
+          if (message) {
+            messageClient(message);
+          }
+          $('#msgInput').val('');
+          event.preventDefault();
+        });
       });
 
-
-
       function requestCell(id){
-        // request the cell ID from the  server
-        // wait for a response and then call:
-        StartDraw(id);
+        selectClientCell(id);
       }
 
 
@@ -215,14 +189,7 @@
           pg.stroke(color(c));
           // pg.line(px - cellX, py-cellY, x-cellX, y-cellY);
           pg.line(px, py, x, y);
-          //if (sketchParent.id && sketchParent.id.slice(-1) == canvasIndex) {
-
-          //}
         })
-
-        // socket.on('sketchIndex', ({sketchIndex}) => {
-        //   currentSketchIndex = sketchIndex;
-        // })
 
       }
 
@@ -274,8 +241,6 @@
         pd.clear();
       }
 
-
-
       function setScale(scl){
 
         dispScale = scl;
@@ -290,16 +255,12 @@
         vid.css("height", 1080*dispScale);
       }
 
+      const selectClientCell = (id) => {
 
-
-      function StartDraw(id){
-
-         // show the toolar
+         // show the toolbar
         // select cell to interface with. 
-
         pd.clear();
         activeCell = id;
-
         // scroll to element
         $(".cellBtn").eq(id).addClass("masterActiveCell");
         $("#masterToolbar").show();
@@ -307,8 +268,20 @@
       }
 
       const disconnectClient = () => {
-        console.log("DISCONNECT CLIENT")
-        socket.emit('disconnectClient', {clientIndex: activeCell})
+        socket.emit('disconnectClient', {disonnectClientIndex: activeCell, username}, (ack) => {
+          if (ack === 'ok') {
+            giveUpCell();
+            alert('Client Disconnected');
+          } else {
+            alert("Could not disconnect client: " + ack)
+          }
+        })  
+      }
+
+      const messageClient = (clientMessage) => {
+        socket.emit('messageClient', {clientIndex: activeCell, username, messageForClient: clientMessage}, (ack) => {
+          alert(ack);
+        })  
       }
 
       const giveUpCell = () => {
@@ -322,13 +295,12 @@
 
       // request to draw on cell
       function cellClick(id){
-        if(activeCell != id){
+        if(activeCell != id) {
           if(activeCell != -1) {
             giveUpCell();
           }
-          requestCell(id);
+          selectClientCell(id);
         }
-
       }
 
       function setCanvasStatus(str){
@@ -359,8 +331,7 @@
         }
         canvasStatus = str;
       }
-
-
+      
     </script>
   </head>
   <body>
@@ -373,6 +344,11 @@
     <div id="masterToolbar">
       <div class="toolbarBtn" onclick="giveUpCell()" title="Deselect Cell">Deselect Cell</div>
       <div class="toolbarBtn" onclick="disconnectClient()" title="Disconnect">Disconnect Client</div>
+      <form id="clientMsgForm" action="">
+        <label for="password">Message:  </label>
+        <input id="msgInput" type="text" name="msgInput" placeholder="message">
+        <input type="submit" value="send">
+    </form>
     </div>
 
     <div class="main">
