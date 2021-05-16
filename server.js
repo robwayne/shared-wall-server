@@ -48,8 +48,6 @@ app.get('/master', (req, res, next) => {
     res.sendFile('master-login.html', options, (err) => {
         if (err) {
           next(err);
-        } else {
-          console.log('Sent:', 'master')
         }
     });
 });
@@ -66,7 +64,6 @@ app.post(
             let redirectPath = '/console?uid=' + masterUsername;
             redirectPath += id ? `&id=${id}` : '';
             redirectPath += projector ? `&projector=${parseInt(projector)}` : '';
-            console.log("path", redirectPath);
             res.redirect(redirectPath);
         } else {
             res.sendStatus(403);
@@ -98,8 +95,6 @@ app.get('/console', (req, res, next) => {
                 console.log("error sending console file", username)
                 next(err);
                 return;
-            } else {
-                console.log('Sent:', 'console')
             }
         });
 
@@ -110,9 +105,7 @@ app.get('/console', (req, res, next) => {
 });
 
 const resetMaster = (socket) => {
-    console.log('hereeeee', socket, masterSocket)
     if (socket && masterSocket && socket.id === masterSocket.id) {
-        console.log('reset master socket in func')
         masterSocket = null;
         masterLoggedIn = false;
         generateMasterUsername();
@@ -143,7 +136,6 @@ io.sockets.on('connection', (socket) => {
     });
 
     socket.on('registerUsername', ({username}) => {
-        console.log('register', username)
         if (masterLoggedIn && username === masterUsername) {
             console.log('setting socket')
             masterSocket = socket;
@@ -194,7 +186,6 @@ io.sockets.on('connection', (socket) => {
             if (clientCellIndex >= 0 && clientCellIndex < cellSocketIds.length) {
                 const clientSocketId = cellSocketIds[clientCellIndex];
                 const clientCell = users[clientSocketId];
-                console.log("socket to disconnect", sock);
                 if (clientCell && clientCell.socket) {
                     ackCallback("ok");
                     clientCell.socket.disconnect(true);
@@ -211,7 +202,6 @@ io.sockets.on('connection', (socket) => {
     });
 
     socket.on('clearClientDrawing', (data, ackCallback) => {
-        console.log('disconnectClient');
         const { clientCellIndex, username: clientMaster } = data;
         // TODO: GET CLIENTS SOCKET ID AND DISCONNECT IT BASED ON THAT
         if (clientMaster === masterUsername) {
@@ -262,7 +252,6 @@ const generateMasterUsername = () => {
         const c = index % masterUsername.length === 0 ? alphabet[index].toUpperCase() : alphabet[index].toLowerCase();
         masterUsername += c;
     }
-    console.log(masterUsername)
 };
 
 http.listen(port, () => {
