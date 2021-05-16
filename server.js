@@ -15,6 +15,7 @@ const io = require('socket.io')(http, cors);
 const path = require('path');
 
 const users = {};
+const cellSocketIds = new Array(10);
 const sentData = {};
 const alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
 let availableCells = '1111111111'; 
@@ -28,6 +29,7 @@ const rootPW = "123654";
 
 let masterUsername = "";
 let masterLoggedIn = false;
+let masterSocket;
 
 app.use(express.static('public'));
 app.use(express.json());
@@ -61,7 +63,7 @@ app.post(
         const  { masterPassword } = matchedData(req, { locations: ['body'] });
         if (masterPassword && masterPassword === rootPW) {
             const  { id, projector } = matchedData(req, { locations: ['query'] });
-            let redirectPath = '/console?mu=' + masterUsername;
+            let redirectPath = '/console?uid=' + masterUsername;
             redirectPath += id ? `&id=${id}` : '';
             redirectPath += projector ? `&projector=${parseInt(projector)}` : '';
             console.log("path", redirectPath);
@@ -79,7 +81,7 @@ app.get('/console', (req, res, next) => {
         return;
     }
 
-    const { query: { mu: username }} = req;
+    const { query: { uid: username }} = req;
     console.log('GOT USERNAME', username);
 
     if (username && masterUsername === username) {
@@ -107,12 +109,23 @@ app.get('/console', (req, res, next) => {
     }
 });
 
+const resetMaster = (socket) => {
+    console.log('hereeeee', socket, masterSocket)
+    if (socket && masterSocket && socket.id === masterSocket.id) {
+        console.log('reset master socket in func')
+        masterSocket = null;
+        masterLoggedIn = false;
+        generateMasterUsername();
+    }
+}
+
 const cleanuponDisconnect = (socket) => {
     if (socket && users[socket.id]) {
         const { activeCell } = users[socket.id];
         if (activeCell >= 0) {
             availableCells = replaceAt(availableCells, activeCell, '1');
         }
+        resetMaster(socket);
         delete users[socket.id];
     }
 }
@@ -122,11 +135,20 @@ io.sockets.on('connection', (socket) => {
     console.log('a user connected');
     socket.emit('availableCells', availableCells);
     if (!users[socket.id]) {
-        users[socket.id] = {socket, activeCell: -1}; 
-        socket.on('disconnect', () => {
-            cleanuponDisconnect(socket);
-        });
+        users[socket.id] = {socket, activeCell: -1};
     }
+
+    socket.on('disconnect', () => {
+        cleanuponDisconnect(socket);
+    });
+
+    socket.on('registerUsername', ({username}) => {
+        console.log('register', username)
+        if (masterLoggedIn && username === masterUsername) {
+            console.log('setting socket')
+            masterSocket = socket;
+       }
+    }); 
 
     socket.on('mouse', (data) => {
         const { canvasIndex } = data;
@@ -145,8 +167,9 @@ io.sockets.on('connection', (socket) => {
             if (userData && userData.activeCell === activeCell) {
                 users[socketID].activeCell = -1;
                 availableCells = replaceAt(availableCells, activeCell, '1');
+                cellSocketIds[activeCell] = null;
                 acknowledgementCallback('ok');
-                io.emit('availableCells', availableCells); 
+                setTimeout(() => io.emit('availableCells', availableCells), 300); 
             }
         }
     });
@@ -158,36 +181,29 @@ io.sockets.on('connection', (socket) => {
                 users[socketID].activeCell = requestedCell;
                 ackCallback(availableCells);
                 availableCells = replaceAt(availableCells, requestedCell, '0');
+                cellSocketIds[requestedCell] = socketID;
             }
         }
     });
 
     socket.on('disconnectClient', (data, ackCallback) => {
         console.log('disconnectClient');
-        const { disonnectClientIndex: clientIndex, username: clientMaster} = data;
-        const usersKeys = Object.keys(users);
+        const { clientCellIndex, username: clientMaster} = data;
         // TODO: GET CLIENTS SOCKET ID AND DISCONNECT IT BASED ON THAT
         if (clientMaster === masterUsername) {
-            if (usersKeys.length > 1) {
-                if (clientIndex && clientIndex >= 0 && clientIndex < availableCells.length) {
-                    const sock = usersKeys.map((key) => {
-                        if (users[key].activeCell === clientIndex) {
-                            return users[key].socket;
-                        }
-                    }).filter((s) => s)[0];
-                    console.log("socket to disconnect", sock);
-                    if (sock) {
-                        ackCallback("ok");
-                        sock.disconnect(true);
-                        cleanuponDisconnect(sock);
-                    } else {
-                        ackCallback("Invalid socket for requested client");
-                    }
+            if (clientCellIndex >= 0 && clientCellIndex < cellSocketIds.length) {
+                const clientSocketId = cellSocketIds[clientCellIndex];
+                const clientCell = users[clientSocketId];
+                console.log("socket to disconnect", sock);
+                if (clientCell && clientCell.socket) {
+                    ackCallback("ok");
+                    clientCell.socket.disconnect(true);
+                    cleanuponDisconnect(clientCell.socket);
                 } else {
-                    ackCallback("Invalid `disconnectClientIndex` provided")
+                    ackCallback("Invalid socket for requested client");
                 }
             } else {
-                ackCallback("No other clients connected.")
+                ackCallback("Invalid `clientCellIndex` provided")
             }
         } else {
             ackCallback("Unauthorized client username");
@@ -196,30 +212,19 @@ io.sockets.on('connection', (socket) => {
 
     socket.on('clearClientDrawing', (data, ackCallback) => {
         console.log('disconnectClient');
-        const { clientIndex, username: clientMaster } = data;
-        const usersKeys = Object.keys(users);
+        const { clientCellIndex, username: clientMaster } = data;
         // TODO: GET CLIENTS SOCKET ID AND DISCONNECT IT BASED ON THAT
         if (clientMaster === masterUsername) {
-            if (usersKeys.length > 1) {
-                if (clientIndex >= 0 && clientIndex < availableCells.length) {
-                    const sock = usersKeys.map((key) => {
-                        if (users[key].activeCell === clientIndex) {
-                            return users[key].socket;
-                        }
-                    }).filter((socket) => socket)[0];
-    
-                    if (sock) {
-                        sock.emit('clear', { clearNow: true}, (status) => {
-                            ackCallback(status);
-                        })
-                    } else {
-                        ackCallback("Invalid socket for requested client");
-                    }
+            if (clientCellIndex >= 0 && clientCellIndex < cellSocketIds.length) {
+                const clientSocketId = cellSocketIds[clientCellIndex];
+                if (clientSocketId) {
+                    socket.to(clientSocketId).emit('clear');
+                    ackCallback("ok");
                 } else {
-                    ackCallback("Invalid `disconnectClientIndex` provided")
+                    ackCallback("Invalid socket for requested client");
                 }
             } else {
-                ackCallback("No other clients connected.")
+                ackCallback("Invalid `clientCellIndex` provided")
             }
         } else {
             ackCallback("Unauthorized client username");
@@ -228,26 +233,19 @@ io.sockets.on('connection', (socket) => {
 
 
     socket.on('messageClient', (data, ackCallback) => {
-        const { clientIndex, username: clientMaster, messageForClient } = data;
-        const usersKeys = Object.keys(users);
+        const { clientCellIndex, username: clientMaster, messageForClient } = data;
         // TODO: GET CLIENTS SOCKET ID AND DISCONNECT IT BASED ON THAT
         if (clientMaster === masterUsername) {
-            if (usersKeys.length > 1) {
-                if (clientIndex >= 0 && clientIndex < availableCells.length) {
-                    let sock = usersKeys.map((key) => {
-                        return (users[key].activeCell === clientIndex) ? users[key].socket : null;
-                    }).filter((s) => s !== null)[0];
-                    if (sock) {
-                        sock.emit('msgFromController', { controllerMessage: messageForClient })
-                        ackCallback("ok");
-                    } else {
-                        ackCallback("Invalid socket for requested client");
-                    }
+            if (clientCellIndex >= 0 && clientCellIndex < cellSocketIds.length) {
+                let clientSocketId = cellSocketIds[clientCellIndex];
+                if (clientSocketId) {
+                    socket.to(clientSocketId).emit('msgFromController', { controllerMessage: messageForClient })
+                    ackCallback("ok");
                 } else {
-                    ackCallback("Invalid `disconnectClientIndex` provided")
+                    ackCallback("Invalid socket for requested client");
                 }
             } else {
-                ackCallback("No other clients connected.")
+                ackCallback("Invalid `clientCellIndex` provided")
             }
         } else {
             ackCallback("Unauthorized client username");
