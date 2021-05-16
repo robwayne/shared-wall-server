@@ -87,7 +87,7 @@
       // let currentSketchIndex;
       // let p5Instances = [];
 
-      const development = true; // process.env.PORT === undefined;
+      const development = false; // process.env.PORT === undefined;
       const connectURL = development ? "http://localhost:3000" : "https://midarom.herokuapp.com";
       var dispScale = 0.5;
       var pg;
@@ -122,7 +122,7 @@
       $(function() {
         vid = $("#youtubeVid");
 
-        username = urlParams.get('mu');
+        username = urlParams.get('uid');
         var liveLink = urlParams.get('id');
 
         if(liveLink != null){
@@ -182,7 +182,6 @@
 
           const {_col, x, y, px, py, _weight, canvasIndex} = data;
           const c = _col || "#000000";
-          console.log("received ", ++totalReceived)
           // pg.stroke(color(_col));
           // pg.strokeWeight(strokeWidth);
           pg.strokeWeight(_weight);
@@ -191,6 +190,7 @@
           pg.line(px, py, x, y);
         })
 
+        socket.emit('registerUsername', {username});
       }
 
       function draw(){
@@ -256,8 +256,7 @@
       }
 
       const selectClientCell = (id) => {
-
-         // show the toolbar
+        // show the toolbar
         // select cell to interface with. 
         pd.clear();
         activeCell = id;
@@ -268,7 +267,7 @@
       }
 
       const disconnectClient = () => {
-        socket.emit('disconnectClient', {disonnectClientIndex: activeCell, username}, (ack) => {
+        socket.emit('disconnectClient', {clientCellIndex: activeCell, username}, (ack) => {
           if (ack === 'ok') {
             giveUpCell();
             alert('Client Disconnected');
@@ -279,8 +278,14 @@
       }
 
       const messageClient = (clientMessage) => {
-        socket.emit('messageClient', {clientIndex: activeCell, username, messageForClient: clientMessage}, (ack) => {
-          alert(ack);
+        socket.emit('messageClient', {clientCellIndex: activeCell, username, messageForClient: clientMessage}, (ack) => {
+          console.log(ack);
+        })  
+      }
+
+      const clearClientDrawing = () => {
+        socket.emit('clearClientDrawing', {clientCellIndex: activeCell, username}, (ack) => {
+          console.log(ack);
         })  
       }
 
@@ -336,18 +341,19 @@
   </head>
   <body>
 
-    <header dir="ltr">
+    <header dir="rtl">
       <h1>Master</h1>
-      <h3>Click on a square to select and toggle the options toolbar </h3>
+      <h3>לחצ/י על אחד מהריבועים כדי לפתוח את תפריט האפשרויות</h3>
     </header>
 
     <div id="masterToolbar">
-      <div class="toolbarBtn" onclick="giveUpCell()" title="Deselect Cell">Deselect Cell</div>
-      <div class="toolbarBtn" onclick="disconnectClient()" title="Disconnect">Disconnect Client</div>
+      <div class="toolbarBtn" onclick="giveUpCell()" title="Deselect Cell">ביטול בחירה</div>
+      <div class="toolbarBtn" onclick="clearClientDrawing()" title="Disconnect">נקה/י ציור</div>
+      <div class="toolbarBtn" onclick="disconnectClient()" title="Clear">נתק/י משתמש</div>
       <form id="clientMsgForm" action="">
-        <label for="password">Message:  </label>
-        <input id="msgInput" type="text" name="msgInput" placeholder="message">
-        <input type="submit" value="send">
+        <label for="msgInput">שלח/י הודעה:</label>
+        <input id="msgInput" type="text" name="msgInput" placeholder="הודעה">
+        <input type="submit" value="שלח/י">
     </form>
     </div>
 

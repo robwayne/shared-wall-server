@@ -36,7 +36,7 @@
       // let currentSketchIndex;
       // let p5Instances = [];
 
-      const development = true; // process.env.PORT === undefined;
+      const development = false; // process.env.PORT === undefined;
       const connectURL = development ? "http://localhost:3000" : "https://midarom.herokuapp.com";
       var dispScale = 0.5;
       var pg;
@@ -67,6 +67,7 @@
       var activeCell = -1;
 
       var projectorMode = false;
+      let shouldClearDrawing = false;
 
 	    // Sending data to the socket
       const sendMouse = (x, y, px, py, canvasIndex) => {
@@ -84,10 +85,6 @@
         console.log("sending ", totalSent, data)
       	socket.emit('mouse', data)
       }
-
-
-
-
 
       const urlParams = new URLSearchParams(window.location.search);
 
@@ -188,16 +185,12 @@
           setScale(0.75);
         }
 
-
-
-
         // Callback function
         socket.on('mouse', (data) => {
           // if (canvasIndex && p5Instances[canvasIndex].parent() )
 
           const {_col, x, y, px, py, _weight, canvasIndex} = data;
           const c = _col || "#000000";
-          console.log("received ", ++totalReceived, data);
           // pg.stroke(color(_col));
           // pg.strokeWeight(strokeWidth);
           pg.strokeWeight(_weight);
@@ -219,9 +212,9 @@
           }
         })
 
-        // socket.on('sketchIndex', ({sketchIndex}) => {
-        //   currentSketchIndex = sketchIndex;
-        // })
+        socket.on('clear', () => {
+          shouldClearDrawing = true;
+        });
 
       }
 
@@ -258,12 +251,11 @@
         // the drawing layer
         image(pg, 0, 0, width, height);
 
-
         if(projectorMode){
           return;
         }
         // user input
-        if(mouseIsPressed && activeCell > -1){
+        if(mouseIsPressed && activeCell > -1) {
 
           // draw active
           // cellX = width - (cellpositions[activeCell][0]+1)*cellW;
@@ -275,7 +267,7 @@
           pd.stroke(color(_color));
           pd.strokeWeight(_weight);
           pd.line(pos.x - cellX, pos.y- cellY, pos.px - cellX, pos.py- cellY);
-          console.log(pos.x, pos.px);
+
 
           if(pos.x-cellX > 0 && pos.x-cellX < pd.width &&
              pos.px-cellX > 0 && pos.px-cellX < pd.width &&
@@ -291,6 +283,11 @@
 
         if(activeCell > -1){
           image(pd, cellX, cellY);
+        }
+
+        if (shouldClearDrawing) {
+          clearDrawings();
+          shouldClearDrawing = false;
         }
 
       }
@@ -312,6 +309,7 @@
       function clearDrawings(){
         pg.clear();
         pd.clear();
+        clear();
       }
 
 
