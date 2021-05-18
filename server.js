@@ -44,18 +44,22 @@ app.use(express.static('public'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.set('port', port);
+app.set('trust proxy', 'loopback, linklocal, uniquelocal');
 
 
 /* ----MARK: Setup App routes and handlers ---- */
 
 // Redirect all HTTP requests to HTTPS
-app.get('*', function(req, res) {  
-    if (!req.secure && loopbackUrls.indexOf(req.hostname) === -1) {  
-        res.redirect('https://' + req.headers.host + req.url);
-    }
-});
+// app.get('*', function(req, res) {  
+//     console.log("redirecting ", req.baseUrl, req.originalUrl, req.hostname); 
+//     if (!loopbackUrls.includes(req.hostname)) {  
+//         console.log("redirecting again"); 
+//         res.redirect('https://' + req.headers.host + req.url);
+//     }
+// });
 
 app.get('/master', (req, res, next) => {
+    console.log("loading master"); 
     const options = {
         root: path.join(__dirname, 'public'),
         headers: {
