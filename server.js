@@ -1,25 +1,33 @@
 const express = require('express');
-const { check, matchedData  } = require('express-validator')
+const { check, matchedData  } = require('express-validator');
+const httpModule = require('http');
+const path = require('path');
+const socketIO = require('socket.io');
+
+/* ----MARK: App Initializations ---- */
 const app = express();
-const http = require('http').createServer(app);
-const cors =  {
+const originWhitelist = [/midarom\.herokuapp\.com$/, 'http://localhost:3000'];
+const corsOptions =  {
     cors: {
-        origin: "https://midarom.herokuapp.com",
+        origin: originWhitelist,
         methods: ["GET", "POST"],
         transports: ['websocket', 'polling'],
         credentials: true
     },
     allowEIO3: true
-};
-const io = require('socket.io')(http, cors);
-const path = require('path');
+}; 
+const httpServer = httpModule.createServer(app);
+const io = socketIO(httpServer, corsOptions);
 
+/* ----MARK: App Local Variables ----  */
 const users = {};
 const cellSocketIds = new Array(10);
 const sentData = {};
 const alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
 let availableCells = '1111111111'; 
 const port = process.env.PORT || 3000;
+const loopbackUrls = ['localhost', '127.0.0.1']
+
 const replaceAt = (str, index, char) => {
     return str.substr(0, index) + char + str.substr(index + char.length);
 }
@@ -31,11 +39,21 @@ let masterUsername = "";
 let masterLoggedIn = false;
 let masterSocket;
 
+/* ----MARK: Setup Middleware functionality for App ---- */
 app.use(express.static('public'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
 app.set('port', port);
+
+
+/* ----MARK: Setup App routes and handlers ---- */
+
+// Redirect all HTTP requests to HTTPS
+app.get('*', function(req, res) {  
+    if (!req.secure && loopbackUrls.indexOf(req.hostname) === -1) {  
+        res.redirect('https://' + req.headers.host + req.url);
+    }
+});
 
 app.get('/master', (req, res, next) => {
     const options = {
@@ -79,7 +97,6 @@ app.get('/console', (req, res, next) => {
     }
 
     const { query: { uid: username }} = req;
-    console.log('GOT USERNAME', username);
 
     if (username && masterUsername === username) {
         const options = {
@@ -92,7 +109,7 @@ app.get('/console', (req, res, next) => {
         
         res.sendFile('console-root.html', options, (err) => {
             if (err) {
-                console.log("error sending console file", username)
+                console.err("error sending console file", username)
                 next(err);
                 return;
             }
@@ -103,6 +120,17 @@ app.get('/console', (req, res, next) => {
         res.redirect('/');
     }
 });
+
+/* ----MARK: Private Methods ---- */
+
+const generateMasterUsername = () => {
+    if (masterUsername.length) masterUsername = "";
+    for(let i=0;i<16;i++) {
+        const index = Math.round(Math.random() * (alphabet.length - 1));
+        const c = index % masterUsername.length === 0 ? alphabet[index].toUpperCase() : alphabet[index].toLowerCase();
+        masterUsername += c;
+    }
+};
 
 const resetMaster = (socket) => {
     if (socket && masterSocket && socket.id === masterSocket.id) {
@@ -123,10 +151,12 @@ const cleanuponDisconnect = (socket) => {
     }
 }
 
-// MARK: SOCKET IO
+/* ----MARK: Socket IO Events ---- */
+
 io.sockets.on('connection', (socket) => {
-    console.log('a user connected');
-    socket.emit('availableCells', availableCells);
+
+    io.emit('availableCells', availableCells);
+
     if (!users[socket.id]) {
         users[socket.id] = {socket, activeCell: -1};
     }
@@ -137,7 +167,6 @@ io.sockets.on('connection', (socket) => {
 
     socket.on('registerUsername', ({username}) => {
         if (masterLoggedIn && username === masterUsername) {
-            console.log('setting socket')
             masterSocket = socket;
        }
     }); 
@@ -151,7 +180,7 @@ io.sockets.on('connection', (socket) => {
         socket.broadcast.emit('mouse', data)
     }); 
     
-    socket.on('relinquishCell', (data, acknowledgementCallback) => {
+    socket.on('relinquishCell', (data, ackCallback) => {
         const { socketID, activeCell } = data;
         // acknowledgementCallback("SERVER trying to relinquish" + activeCell + socketID);
         if (socketID && availableCells[activeCell] == '0') {
@@ -160,7 +189,7 @@ io.sockets.on('connection', (socket) => {
                 users[socketID].activeCell = -1;
                 availableCells = replaceAt(availableCells, activeCell, '1');
                 cellSocketIds[activeCell] = null;
-                acknowledgementCallback('ok');
+                ackCallback(availableCells);
                 setTimeout(() => io.emit('availableCells', availableCells), 300); 
             }
         }
@@ -179,7 +208,7 @@ io.sockets.on('connection', (socket) => {
     });
 
     socket.on('disconnectClient', (data, ackCallback) => {
-        console.log('disconnectClient');
+        console.log('disconnecting client event');
         const { clientCellIndex, username: clientMaster} = data;
         // TODO: GET CLIENTS SOCKET ID AND DISCONNECT IT BASED ON THAT
         if (clientMaster === masterUsername) {
@@ -225,7 +254,7 @@ io.sockets.on('connection', (socket) => {
     socket.on('messageClient', (data, ackCallback) => {
         const { clientCellIndex, username: clientMaster, messageForClient } = data;
         // TODO: GET CLIENTS SOCKET ID AND DISCONNECT IT BASED ON THAT
-        if (clientMaster === masterUsername) {
+        if (username === masterUsername) {
             if (clientCellIndex >= 0 && clientCellIndex < cellSocketIds.length) {
                 let clientSocketId = cellSocketIds[clientCellIndex];
                 if (clientSocketId) {
@@ -242,19 +271,43 @@ io.sockets.on('connection', (socket) => {
         }
     });
 
+    socket.on('disableCellForClients', (data, ackCallback) => {
+        const { clientCellIndex, username } = data;
+        // TODO: GET CLIENTS SOCKET ID AND DISCONNECT IT BASED ON THAT
+        if (username === masterUsername) {
+            if (clientCellIndex >= 0 && clientCellIndex < availableCells.length) {
+                ackCallback("ok");
+                availableCells = replaceAt(availableCells, clientCellIndex, '2');
+                cellSocketIds[requestedCell] = null;
+                socket.broadcast.emit('availableCells', availableCells);
+            } else {
+                ackCallback("Invalid `clientCellIndex` provided")
+            }
+        } else {
+            ackCallback("Unauthorized client username");
+        }
+    });
+    
+    socket.on('reenableCellForClients', (data, ackCallback) => {
+        const { clientCellIndex, username } = data;
+        // TODO: GET CLIENTS SOCKET ID AND DISCONNECT IT BASED ON THAT
+        if (username === masterUsername) {
+            if (clientCellIndex >= 0 && clientCellIndex < availableCells.length) {
+                ackCallback("ok");
+                availableCells = replaceAt(availableCells, clientCellIndex, '1');
+                cellSocketIds[requestedCell] = null;
+                socket.broadcast.emit('availableCells', availableCells);
+            } else {
+                ackCallback("Invalid `clientCellIndex` provided")
+            }
+        } else {
+            ackCallback("Unauthorized client username");
+        }
+    });
+   
+});
 
-})
-
-const generateMasterUsername = () => {
-    if (masterUsername.length) masterUsername = "";
-    for(let i=0;i<16;i++) {
-        const index = Math.round(Math.random() * (alphabet.length - 1));
-        const c = index % masterUsername.length === 0 ? alphabet[index].toUpperCase() : alphabet[index].toLowerCase();
-        masterUsername += c;
-    }
-};
-
-http.listen(port, () => {
+httpServer.listen(port, () => {
   generateMasterUsername();
   console.log('listening on *:', port);
 });

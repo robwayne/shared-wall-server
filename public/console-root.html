@@ -66,28 +66,27 @@
         justify-content: space-around;
         align-items: center;
       }
+
+      #clientMsgForm {
+        height: 60px;
+        width: 100%;
+        min-width: 100%;
+        max-width: 100%;
+      }
+
+      #clientMsgForm input[type=text] {
+        height: 100%;
+        max-width: 75%;
+      }
+
     </style>
     <script type="text/javascript">
-
-
-      /* API
-
-      clearDrawings() - to clear the entire canvas
-
-      setAvailableCanvases("0011001010") - accepts a 10 digit string with either 0 or 1 for each available canvas
-
-      requestCanvas(id) - requests to draw on a particular canvas using its id
-
-      */
-
 
       let socket;
       let totalSent = 0;
       let totalReceived = 0;
-      // let currentSketchIndex;
-      // let p5Instances = [];
-
-      const development = false; // process.env.PORT === undefined;
+      const loopbackURLs = ['localhost', '127.0.0.1'];
+      const development = loopbackURLs.includes(window.location.hostname);
       const connectURL = development ? "http://localhost:3000" : "https://midarom.herokuapp.com";
       var dispScale = 0.5;
       var pg;
@@ -97,8 +96,9 @@
       var pos = {x:0, y:0, px:0, py:0, scl:dispScale};
       var youtubeId = "21X5lGlDOfg";
       var embedAddress = "https://www.youtube.com/embed/" + youtubeId +  "?autoplay=1&mute=1&wmode=opaque&showinfo=0&controls=0";
-      var canvasStatus = "1111111111";
+      let canvasStatus = "1111111111";
       let username;
+      let activeCellIsDisabled = false;
 
       var _color = "#000000";
       var _weight = 1;
@@ -156,12 +156,10 @@
         selectClientCell(id);
       }
 
-
       function setup(){
         let cnv = createCanvas(1920, 1080);
         pg = createGraphics(width, height);
         pd = createGraphics(width/5, height/4);
-        setCanvasStatus("1111111111");
         cnv.parent('p5Container');
         smooth(4);
 
@@ -263,8 +261,29 @@
         // scroll to element
         $(".cellBtn").eq(id).addClass("masterActiveCell");
         $("#masterToolbar").show();
-       
       }
+
+      const disableCell = () => {
+        if (activeCell !== -1) {
+          socket.emit('disableCellForClients', { clientCellIndex: activeCell, username }, (ack) => {
+            if (ack === "ok") {
+              $(".cellBtn").eq(activeCell).removeClass("busy").removeClass("free").addClass("cellDisabled");
+              $("#disableCellBtn").text('Reenable cell');
+            }
+          });
+        }
+      };
+
+      const reenableCell = () => {
+        if (activeCell !== -1) {
+          socket.emit('reenableCellForClients', { clientCellIndex: activeCell, username }, (ack) => {
+            if (ack === "ok") {
+              $(".cellBtn").eq(activeCell).removeClass("cellDisabled").addClass('free');
+              $("#disableCellBtn").text('Disable cell');
+            }
+          });
+        }
+      };
 
       const disconnectClient = () => {
         socket.emit('disconnectClient', {clientCellIndex: activeCell, username}, (ack) => {
@@ -274,8 +293,8 @@
           } else {
             alert("Could not disconnect client: " + ack)
           }
-        })  
-      }
+        });  
+      };
 
       const messageClient = (clientMessage) => {
         socket.emit('messageClient', {clientCellIndex: activeCell, username, messageForClient: clientMessage}, (ack) => {
@@ -298,6 +317,14 @@
         $("#masterToolbar").hide();
       }
 
+      const toggleCellInteraction = () => {
+        if (activeCellIsDisabled) {
+          reenableCell();
+        } else {
+          disableCell();
+        }
+      };
+
       // request to draw on cell
       function cellClick(id){
         if(activeCell != id) {
@@ -308,34 +335,36 @@
         }
       }
 
-      function setCanvasStatus(str){
-        // if identical skip the whole thing
-        if(str == canvasStatus){
-          return;
-        }
+      // function setCanvasStatus(str){
+      //   // if identical skip the whole thing
+      //   if(str == canvasStatus){
+      //     return;
+      //   }
 
-        if(str.length > 10){
-          str = str.slice(10);
-        }else if(str.length < 10){
-          for(var i = 0 ; i < 10 - str.length; i++){
-            str += "0";
-          }
-        }
-        var arr = str.split("");
+      //   if(str.length > 10){
+      //     str = str.slice(10);
+      //   }else if(str.length < 10){
+      //     for(var i = 0 ; i < 10 - str.length; i++){
+      //       str += "0";
+      //     }
+      //   }
+      //   var arr = str.split("");
 
-        for(var i = 0 ; i < 10; i++){
-          arr[i] = parseInt(arr[i]);
-        }
+      //   for(var i = 0 ; i < 10; i++){
+      //     arr[i] = parseInt(arr[i]);
+      //   }
 
-        for(var i = 0 ; i < 10; i++){
-          if(arr[i] == 1){
-            $(".cellBtn").eq(i).addClass("free").removeClass("busy");
-          }else{
-            $(".cellBtn").eq(i).addClass("busy").removeClass("free");
-          }
-        }
-        canvasStatus = str;
-      }
+      //   for(var i = 0 ; i < 10; i++){
+      //     if(arr[i] == 0){ 
+      //       $(".cellBtn").eq(i).addClass("busy").removeClass("free").removeClass("cellDisabled");
+      //     } else if(arr[i] == 1){
+      //       $(".cellBtn").eq(i).addClass("free").removeClass("busy").removeClass("cellDisabled");
+      //     } else if (arr[i] === 2){
+      //       $(".cellBtn").eq(i).addClass("cellDisabled").removeClass("free").removeClass("busy");
+      //     }
+      //   }
+      //   canvasStatus = str;
+      // }
       
     </script>
   </head>
@@ -347,9 +376,10 @@
     </header>
 
     <div id="masterToolbar">
-      <div class="toolbarBtn" onclick="giveUpCell()" title="Deselect Cell">ביטול בחירה</div>
-      <div class="toolbarBtn" onclick="clearClientDrawing()" title="Disconnect">נקה/י ציור</div>
-      <div class="toolbarBtn" onclick="disconnectClient()" title="Clear">נתק/י משתמש</div>
+      <div class="toolbarBtn" onclick="giveUpCell()">ביטול בחירה</div>
+      <div class="toolbarBtn" onclick="clearClientDrawing()">נקה/י ציור</div>
+      <div class="toolbarBtn" onclick="disconnectClient()" >נתק/י משתמש</div>
+      <div class="toolbarBtn" id="disableCellBtn" onclick="toggleCellInteraction()" >Disable cell</div>
       <form id="clientMsgForm" action="">
         <label for="msgInput">שלח/י הודעה:</label>
         <input id="msgInput" type="text" name="msgInput" placeholder="הודעה">

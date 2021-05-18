@@ -29,14 +29,10 @@
 
       */
 
-
       let socket;
-      let totalSent = 0;
-      let totalReceived = 0;
-      // let currentSketchIndex;
-      // let p5Instances = [];
 
-      const development = false; // process.env.PORT === undefined;
+      const loopbackURLs = ['localhost', '127.0.0.1'];
+      const development = loopbackURLs.includes(window.location.hostname);
       const connectURL = development ? "http://localhost:3000" : "https://midarom.herokuapp.com";
       var dispScale = 0.5;
       var pg;
@@ -113,9 +109,13 @@
         socket = io.connect(connectURL);
 
         socket.on('availableCells', (data) => {
-
           console.log(data);
-          // data is the string
+          // if the cell has been marked disabled by master,
+          // and this client had a now disabled cell selected 
+          // close the drawing
+          if (activeCell !== -1 && data[activeCell] === 2) {
+            closeDrawing();
+          }
           setCanvasStatus(data);
         });
 
@@ -446,10 +446,12 @@
         }
 
         for(var i = 0 ; i < 10; i++){
-          if(arr[i] == 1){
-            $(".cellBtn").eq(i).addClass("free").removeClass("busy");
-          }else{
-            $(".cellBtn").eq(i).addClass("busy").removeClass("free");
+          if(arr[i] == 0){ 
+            $(".cellBtn").eq(i).addClass("busy").removeClass("free").removeClass("cellDisabled");
+          } else if(arr[i] == 1){
+            $(".cellBtn").eq(i).addClass("free").removeClass("busy").removeClass("cellDisabled");
+          } else if (arr[i] === 2){
+            $(".cellBtn").eq(i).addClass("cellDisabled").removeClass("free").removeClass("busy");
           }
         }
         canvasStatus = str;
