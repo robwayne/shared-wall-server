@@ -282,7 +282,7 @@ io.sockets.on('connection', (socket) => {
             if (clientCellIndex >= 0 && clientCellIndex < availableCells.length) {
                 ackCallback("ok");
                 availableCells = replaceAt(availableCells, clientCellIndex, '2');
-                cellSocketIds[requestedCell] = null;
+                cellSocketIds[clientCellIndex] = null;
                 socket.broadcast.emit('availableCells', availableCells);
             } else {
                 ackCallback("Invalid `clientCellIndex` provided")
@@ -299,7 +299,7 @@ io.sockets.on('connection', (socket) => {
             if (clientCellIndex >= 0 && clientCellIndex < availableCells.length) {
                 ackCallback("ok");
                 availableCells = replaceAt(availableCells, clientCellIndex, '1');
-                cellSocketIds[requestedCell] = null;
+                cellSocketIds[clientCellIndex] = null;
                 socket.broadcast.emit('availableCells', availableCells);
             } else {
                 ackCallback("Invalid `clientCellIndex` provided")
