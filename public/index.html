@@ -207,7 +207,8 @@
           }
         })
 
-        socket.on('clear', () => {
+        socket.on('clearAllDrawings', () => {
+          console.log(" should clear everything");
           shouldClearDrawing = true;
         });
 
@@ -302,6 +303,9 @@
       }
 
       function clearDrawings(){
+        pg.reset();
+        pd.reset();
+        reset();
         pg.clear();
         pd.clear();
         clear();

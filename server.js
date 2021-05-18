@@ -234,10 +234,19 @@ io.sockets.on('connection', (socket) => {
         }
     });
 
+    socket.on('clearAll', (data, ackCallback) => {
+        const { username } = data;
+        if (username === masterUsername) {
+            ackCallback("ok");
+            socket.broadcast.emit('clearAllDrawings');
+        } else {
+            ackCallback("Unauthorized client username");
+        }
+    });
+
     socket.on('clearClientDrawing', (data, ackCallback) => {
-        const { clientCellIndex, username: clientMaster } = data;
-        // TODO: GET CLIENTS SOCKET ID AND DISCONNECT IT BASED ON THAT
-        if (clientMaster === masterUsername) {
+        const { clientCellIndex, username } = data;
+        if (username === masterUsername) {
             if (clientCellIndex >= 0 && clientCellIndex < cellSocketIds.length) {
                 const clientSocketId = cellSocketIds[clientCellIndex];
                 if (clientSocketId) {
@@ -253,7 +262,6 @@ io.sockets.on('connection', (socket) => {
             ackCallback("Unauthorized client username");
         }
     });
-
 
     socket.on('messageClient', (data, ackCallback) => {
         const { clientCellIndex, username: clientMaster, messageForClient } = data;

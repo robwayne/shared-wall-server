@@ -319,11 +319,18 @@
         })  
       }
 
-      const clearClientDrawing = () => {
-        socket.emit('clearClientDrawing', {clientCellIndex: activeCell, username}, (ack) => {
+      const clearAllDrawings = () => {
+        console.log("sending CLEAR ALL message")
+        socket.emit('clearAll', {username}, (ack) => {
           console.log(ack);
-        })  
-      }
+        });  
+      };
+
+      const clearClientDrawing = () => {
+        socket.emit('clearClientDrawing', {username, clientCellIndex: activeCell}, (ack) => {
+          console.log(ack);
+        });  
+      };
 
       const giveUpCell = () => {
         pg.image(pd, cellX, cellY);
@@ -394,7 +401,7 @@
 
     <div id="masterToolbar">
       <div class="toolbarBtn" onclick="giveUpCell()">ביטול בחירה</div>
-      <div class="toolbarBtn" onclick="clearClientDrawing()">נקה/י ציור</div>
+      <div class="toolbarBtn" onclick="clearAllDrawings()">נקהו ציור</div>
       <div class="toolbarBtn" id="disableCellBtn" onclick="toggleCellInteraction()" >Disable cell</div>
       <div class="toolbarBtn" onclick="disconnectClient()" >נתק/י משתמש</div>
       <form id="clientMsgForm" action="">
