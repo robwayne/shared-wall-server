@@ -213,9 +213,9 @@ io.sockets.on('connection', (socket) => {
 
     socket.on('disconnectClient', (data, ackCallback) => {
         console.log('disconnecting client event');
-        const { clientCellIndex, username: clientMaster} = data;
+        const { clientCellIndex, username } = data;
         // TODO: GET CLIENTS SOCKET ID AND DISCONNECT IT BASED ON THAT
-        if (clientMaster === masterUsername) {
+        if (username === masterUsername) {
             if (clientCellIndex >= 0 && clientCellIndex < cellSocketIds.length) {
                 const clientSocketId = cellSocketIds[clientCellIndex];
                 const clientCell = users[clientSocketId];
@@ -264,7 +264,7 @@ io.sockets.on('connection', (socket) => {
     });
 
     socket.on('messageClient', (data, ackCallback) => {
-        const { clientCellIndex, username: clientMaster, messageForClient } = data;
+        const { clientCellIndex, username, messageForClient } = data;
         // TODO: GET CLIENTS SOCKET ID AND DISCONNECT IT BASED ON THAT
         if (username === masterUsername) {
             if (clientCellIndex >= 0 && clientCellIndex < cellSocketIds.length) {
