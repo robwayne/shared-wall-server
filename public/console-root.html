@@ -68,23 +68,27 @@
       }
 
       #clientMsgForm {
-        height: 60px;
+        height: 50px;
         width: 100%;
         min-width: 100%;
         max-width: 100%;
       }
 
       #clientMsgForm input[type=text] {
-        height: 100%;
+        height: 90%;
         max-width: 75%;
+      }
+
+      .cellDisabled {
+        background: transparent;
+        cursor: pointer;
+        border: 4px solid #727272;
       }
 
     </style>
     <script type="text/javascript">
 
       let socket;
-      let totalSent = 0;
-      let totalReceived = 0;
       const loopbackURLs = ['localhost', '127.0.0.1'];
       const development = loopbackURLs.includes(window.location.hostname);
       const connectURL = development ? "http://localhost:3000" : "https://midarom.herokuapp.com";
@@ -98,7 +102,6 @@
       var embedAddress = "https://www.youtube.com/embed/" + youtubeId +  "?autoplay=1&mute=1&wmode=opaque&showinfo=0&controls=0";
       let canvasStatus = "1111111111";
       let username;
-      let activeCellIsDisabled = false;
 
       var _color = "#000000";
       var _weight = 1;
@@ -154,6 +157,10 @@
 
       function requestCell(id){
         selectClientCell(id);
+      }
+
+      const replaceAt = (str, index, char) => {
+          return str.substr(0, index) + char + str.substr(index + char.length);
       }
 
       function setup(){
@@ -253,6 +260,10 @@
         vid.css("height", 1080*dispScale);
       }
 
+      const isCellDisabled = (cellId) => {
+        return (canvasStatus[cellId] === '2');
+      }
+
       const selectClientCell = (id) => {
         // show the toolbar
         // select cell to interface with. 
@@ -260,6 +271,11 @@
         activeCell = id;
         // scroll to element
         $(".cellBtn").eq(id).addClass("masterActiveCell");
+        if (isCellDisabled(id)) {
+          $("#disableCellBtn").text('Reenable cell');
+        } else {
+          $("#disableCellBtn").text('Disable cell');
+        }
         $("#masterToolbar").show();
       }
 
@@ -267,6 +283,7 @@
         if (activeCell !== -1) {
           socket.emit('disableCellForClients', { clientCellIndex: activeCell, username }, (ack) => {
             if (ack === "ok") {
+              canvasStatus = replaceAt(canvasStatus, activeCell, '2');
               $(".cellBtn").eq(activeCell).removeClass("busy").removeClass("free").addClass("cellDisabled");
               $("#disableCellBtn").text('Reenable cell');
             }
@@ -318,7 +335,7 @@
       }
 
       const toggleCellInteraction = () => {
-        if (activeCellIsDisabled) {
+        if (isCellDisabled(activeCell)) {
           reenableCell();
         } else {
           disableCell();
@@ -378,8 +395,8 @@
     <div id="masterToolbar">
       <div class="toolbarBtn" onclick="giveUpCell()">ביטול בחירה</div>
       <div class="toolbarBtn" onclick="clearClientDrawing()">נקה/י ציור</div>
-      <div class="toolbarBtn" onclick="disconnectClient()" >נתק/י משתמש</div>
       <div class="toolbarBtn" id="disableCellBtn" onclick="toggleCellInteraction()" >Disable cell</div>
+      <div class="toolbarBtn" onclick="disconnectClient()" >נתק/י משתמש</div>
       <form id="clientMsgForm" action="">
         <label for="msgInput">שלח/י הודעה:</label>
         <input id="msgInput" type="text" name="msgInput" placeholder="הודעה">

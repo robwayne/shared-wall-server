@@ -77,8 +77,6 @@
       		canvasIndex,
       		socketID: socket.id,
       	}
-        totalSent++;
-        console.log("sending ", totalSent, data)
       	socket.emit('mouse', data)
       }
 
@@ -197,9 +195,6 @@
           pg.stroke(color(c));
           // pg.line(px - cellX, py-cellY, x-cellX, y-cellY);
           pg.line(px, py, x, y);
-          //if (sketchParent.id && sketchParent.id.slice(-1) == canvasIndex) {
-
-          //}
         })
 
         socket.on('msgFromController', ({ controllerMessage }) => {
