@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" dir="rtl">
+<html lang="he" dir="rtl">
   <head>
     <script type="text/javascript" src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.1/p5.min.js"></script>
@@ -16,21 +16,80 @@
     <title>Master Client: Shared Drawing Wall Server</title>
     <link rel="stylesheet" href="index.css">
     <style>
-      .masterActiveCell{
-        background: transparent;
+      #masterToolbar {
+        padding: 10px;
+        border: 2px solid black;
+        position: fixed;
+        z-index: 10000;
+        background: #fff;
+        top: 15%;
+        right: 10px;
+        min-width: 200px;
+        width: 400px;
+        height: auto;
+        max-height: 95%;
+        display: flex;
+        flex-direction: column;
+        /* justify-content: space-around; */
+        align-items: center;
+      }
+
+      #floatingToolbarBtn {
+        position: fixed;
+        z-index: 10000;
+        top: 20%;
+        right: 10px;
+        background-color: rgba(50, 185, 226, 0.7);
+      }
+
+      .hideToolbarBtn {
+        height: 30px;
+        width: 30px;
+        border-radius: 50%;
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background-color: transparent;
         cursor: pointer;
-        border: 4px solid Blue;
+      }
+
+      .hideToolbarBtn:hover {
+        background-color: rgba(50, 185, 226, 0.3);
+      }
+      
+      .toolbarContent {
+        width: 100%;
+        height: 55%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid #bbbbbb;
+        padding-bottom: 20px;
+        margin-bottom: 20px;
+      }
+      
+      .toolbarContent:last-of-type {
+        height: 40%;
+        border: none;
+        margin-bottom: 10px;
+      }
+
+      .toolbarContent h3 {
+        margin-bottom: 10px;
+        font-weight: 550 !important;
       }
 
       .toolbarBtn {
         max-width: 90%;
-        padding: 5px;
+        padding: 10px;
         text-align: center;
-        height: 30px;
+        height: 45px;
         cursor: pointer;
         background-color: transparent;
         border: 2px solid #e78a1f;
         color: #e78a1f;
+        margin: 5px;
       }
 
       .toolbarBtn:hover {
@@ -51,40 +110,35 @@
         border: #fff;
       }
 
-      #masterToolbar {
-        padding-top: 10px;
-        border: 2px solid black;
-        position: fixed;
-        z-index: 10000;
-        background: #fff;
-        top: 120px;
-        right: 10px;
-        min-width: 200px;
-        width: 400px;
-        height: 250px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-around;
-        align-items: center;
-        
-      }
-
       #clientMsgForm {
         height: 50px;
-        width: 100%;
-        min-width: 100%;
-        max-width: 100%;
+        width: auto;
+        margin: 20px 0 10px 0;
       }
 
       #clientMsgForm input[type=text] {
-        height: 90%;
+        height: 100%;
         max-width: 75%;
+        border: 1px solid #979797;
+        font-size: 12px;
+      }
+
+      #clientMsgForm input[type=submit] {
+        height: 100%;
+        width: 50px;
+        border: none;
+        box-shadow: 1px 1px 1px #979797;
       }
 
       .cellDisabled {
         background: transparent;
         cursor: pointer;
-        border: 4px solid #727272;
+        border: 4px solid #eb2626;
+      }
+
+      .cellDisabled:hover {
+        background:  #eb2626;
+        border: none;
       }
 
       .userSelected {
@@ -97,7 +151,7 @@
         border: none;
       }
 
-      .free:hover{
+      .free:hover, .masterActiveCell:hover {
         background: rgba(0,0,255,0.6);
       }
 
@@ -124,7 +178,13 @@
         color: #fff  !important;
         border: #fff  !important;
       }
-      
+
+      .masterActiveCell{
+        background: transparent;
+        cursor: pointer;
+        border: 4px solid blue !important;
+      }
+    
     </style>
     <script type="text/javascript">
 
@@ -159,6 +219,7 @@
 
       var projectorMode = false;
       let shouldClearDrawing = false;
+      let isToolbarHidden = false;
 	    
       const urlParams = new URLSearchParams(window.location.search);
 
@@ -182,13 +243,14 @@
           }
         }
 
-        $("#masterToolbar").hide();
+        $("#floatingToolbarBtn").hide();
+        $("#activeCellOptions").hide();
         socket = io.connect(connectURL);
 
         $("#clientMsgForm").submit((event) => {
           const message  = $('#msgInput').val();
           if (message) {
-            messageClient(message);
+            emitMessageClient(message);
           }
           $('#msgInput').val('');
           event.preventDefault();
@@ -316,44 +378,49 @@
       }
 
       const selectClientCell = (id) => {
-        // show the toolbar
-        // select cell to interface with. 
-        pd.clear();
-        activeCell = id;
-        // scroll to element
-        $(".cellBtn").eq(id).addClass("masterActiveCell");
-        if (isCellDisabled(id)) {
-          $("#disableCellBtn").text('Reenable cell');
-        } else {
-          $("#disableCellBtn").text('Disable cell');
+        if (id >= 0 && id < canvasStatus.length) {
+          // show the selected cell options toolbar
+          // select cell to interface with. 
+          pd.clear();
+          activeCell = id;
+          // scroll to element
+          $(".cellBtn").eq(id).addClass("masterActiveCell");
+          if (isCellDisabled(id)) {
+            $("#disableCellBtn").text('לא חסום בחירה');
+          } else {
+            $("#disableCellBtn").text('חסום בחירה');
+          }
+          if (isToolbarHidden) { 
+            hideOrShowToolbar();
+          }
+          $("#activeCellOptions").fadeIn('500');
         }
-        $("#masterToolbar").show();
       }
 
-      const disableCell = () => {
+      const emitDisableCell = () => {
         if (activeCell !== -1) {
           socket.emit('disableCellForClients', { clientCellIndex: activeCell, username }, (ack) => {
             if (ack === "ok") {
               canvasStatus = replaceAt(canvasStatus, activeCell, '2');
               $(".cellBtn").eq(activeCell).removeClass("busy").removeClass("free").addClass("cellDisabled");
-              $("#disableCellBtn").text('Reenable cell');
+              $("#disableCellBtn").text('לא חסום בחירה');
             }
           });
         }
       };
 
-      const reenableCell = () => {
+      const emitEnableCell = () => {
         if (activeCell !== -1) {
-          socket.emit('reenableCellForClients', { clientCellIndex: activeCell, username }, (ack) => {
+          socket.emit('enableCellForClients', { clientCellIndex: activeCell, username }, (ack) => {
             if (ack === "ok") {
               $(".cellBtn").eq(activeCell).removeClass("cellDisabled").addClass('free');
-              $("#disableCellBtn").text('Disable cell');
+              $("#disableCellBtn").text('חסום בחירה');
             }
           });
         }
       };
 
-      const disconnectClient = () => {
+      const emitDisconnectClient = () => {
         socket.emit('disconnectClient', {clientCellIndex: activeCell, username}, (ack) => {
           if (ack === 'ok') {
             giveUpCell();
@@ -364,13 +431,25 @@
         });  
       };
 
-      const messageClient = (clientMessage) => {
+      const emitDisconnectAllClients = () => {
+        socket.emit('disconnectAllClients', {username}, (ack) => {
+          if (ack === 'ok') {
+            giveUpCell();
+            shouldClearDrawing = true;
+            alert('Successfully disconnected and reset all clients');
+          } else {
+            alert("Could not disconnect client: " + ack)
+          }
+        }); 
+      }
+
+      const emitMessageClient = (clientMessage) => {
         socket.emit('messageClient', {clientCellIndex: activeCell, username, messageForClient: clientMessage}, (ack) => {
           console.log(ack);
         })  
       }
 
-      const clearAllDrawings = () => {
+      const emitClearAllDrawings = () => {
         console.log("sending CLEAR ALL message")
         socket.emit('clearAll', {username}, (ack) => {
           if (ack === "ok") {
@@ -379,26 +458,28 @@
         });  
       };
 
-      const clearClientDrawing = () => {
+      const emitClearClientDrawing = () => {
         socket.emit('clearClientDrawing', {username, clientCellIndex: activeCell}, (ack) => {
           console.log(ack);
         });  
       };
 
       const giveUpCell = () => {
-        pg.image(pd, cellX, cellY);
-        // tell the server to give up this cell
-        $(".cellBtn").eq(activeCell).removeClass("masterActiveCell");
-        // $(".cellBtn").removeClass("activeCell");
-        activeCell = -1;
-        $("#masterToolbar").hide();
+        if (activeCell != -1) {
+          pg.image(pd, cellX, cellY);
+          // tell the server to give up this cell
+          $(".cellBtn").eq(activeCell).removeClass("masterActiveCell");
+          // $(".cellBtn").removeClass("activeCell");
+          activeCell = -1;
+          $("#activeCellOptions").fadeOut('500');
+        }
       }
 
       const toggleCellInteraction = () => {
         if (isCellDisabled(activeCell)) {
-          reenableCell();
+          emitEnableCell();
         } else {
-          disableCell();
+          emitDisableCell();
         }
       };
 
@@ -411,6 +492,15 @@
           selectClientCell(id);
         }
       }
+
+      const hideOrShowToolbar = () => {
+        if (isToolbarHidden) {
+          $("#floatingToolbarBtn").fadeOut('300', () => $('#masterToolbar').fadeIn('300'));
+        } else {
+          $("#masterToolbar").fadeOut('300', () => $('#floatingToolbarBtn').fadeIn('300'));
+        }
+        isToolbarHidden = !isToolbarHidden;
+      };
 
       function setCanvasStatus(str){
         // if identical skip the whole thing
@@ -440,32 +530,36 @@
         }
         canvasStatus = str;
       }
-
-
-      
     </script>
   </head>
   <body>
 
     <header dir="rtl">
-      <h1>Master</h1>
+      <h1>לוח בקרה</h1>
       <h3>לחצ/י על אחד מהריבועים כדי לפתוח את תפריט האפשרויות</h3>
     </header>
-
+    <img src="img/hide.png" id="floatingToolbarBtn" class="hideToolbarBtn" onclick="hideOrShowToolbar()">
     <div id="masterToolbar">
-      <div class="toolbarBtn grey" onclick="giveUpCell()">ביטול בחירה</div>
-      <div class="toolbarBtn black" onclick="clearAllDrawings()">נקהו ציור</div>
-      <div class="toolbarBtn" id="disableCellBtn" onclick="toggleCellInteraction()" >Disable cell</div>
-      <div class="toolbarBtn" onclick="disconnectClient()" >נתק/י משתמש</div>
-      <form id="clientMsgForm" action="">
-        <label for="msgInput">שלח/י הודעה:</label>
-        <input id="msgInput" type="text" name="msgInput" placeholder="הודעה">
-        <input type="submit" value="שלח/י">
-    </form>
+      <img src="img/hide.png" class="hideToolbarBtn" onclick="hideOrShowToolbar()">
+      <div class="toolbarContent" id="activeCellOptions">
+        <h3>ציור זה</h3>
+        <div class="toolbarBtn grey" onclick="giveUpCell()">ביטול בחירה</div>
+        <div class="toolbarBtn" id="disableCellBtn" onclick="toggleCellInteraction()" >חסום בחירה</div>
+        <div class="toolbarBtn" onclick="emitDisconnectClient()" >נתק משתמש</div>
+        <form id="clientMsgForm">
+          <label for="msgInput">שלח הודעה:</label>
+          <input id="msgInput" type="text" name="msgInput" placeholder="הודעה">
+          <input type="submit" value="שלח">
+        </form>
+      </div>
+      <div class="toolbarContent">
+        <h3>כל ציורים</h3>
+        <div class="toolbarBtn" onclick="emitClearAllDrawings()">מחק הכל</div>
+        <div class="toolbarBtn" onclick="emitDisconnectAllClients()">נתק הכל</div>
+      </div>
     </div>
 
     <div class="main">
-
       <div class="overlay">
         <div class="buttonGrid">
           <div class="cellBtn free" onclick="cellClick(0)"></div>  <div class="cellspace"></div>
@@ -480,10 +574,7 @@
           <div class="cellBtn free" onclick="cellClick(9)"></div>  <div class="cellspace"></div>
         </div>
 
-        <div id="p5Container">
-
-        </div>
-
+        <div id="p5Container"></div>
       </div>
       <div class="youtubeContainer">
           <iframe id="youtubeVid" width="1920" height="1080" src="https://www.youtube.com/embed/21X5lGlDOfg?autoplay=1&mute=1&wmode=opaque&showinfo=0&controls=0" autoplay title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" ></iframe>

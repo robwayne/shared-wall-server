@@ -153,7 +153,48 @@ const cleanuponDisconnect = (socket) => {
         resetMaster(socket);
         delete users[socket.id];
     }
+};
+
+const disconnectDrawingClient = (clientCellIndex, ackCallback) => {
+    if (clientCellIndex >= 0 && clientCellIndex < cellSocketIds.length) {
+        const clientSocketId = cellSocketIds[clientCellIndex];
+        const clientCell = users[clientSocketId];
+        if (clientCell && clientCell.socket) {
+            if (masterSocket) {
+                masterSocket.to(clientSocketId).emit('msgFromController', { controllerMessage: 'Your connection has been reset. Refresh in 5s to rejoin.' });
+            }
+            if (ackCallback) ackCallback("ok");
+            clientCell.socket.disconnect(true);
+            cleanuponDisconnect(clientCell.socket);
+        } else {
+            if (ackCallback) ackCallback("Invalid socket for requested client");
+        }
+    } else {
+        if (ackCallback) ackCallback("Invalid `clientCellIndex` provided")
+    }
 }
+
+const discconnectEventCallback = (event, data, ackCallback) => {
+    console.log('disconnecting client event');
+    const { username } = data;
+    if (username && username === masterUsername) {
+        if (event === 'disconnectAllClients') {
+            for(let i=0;i<cellSocketIds.length;i++) {
+                disconnectDrawingClient(i);
+            }
+            ackCallback("ok");
+        } else if (event === 'disconnectClient') {
+            const { clientCellIndex } = data;
+            if (clientCellIndex) {
+                disconnectDrawingClient(clientCellIndex, ackCallback);
+            } else {
+                ackCallback("Invalid `clientCellIndex` provided");
+            }   
+        }
+    } else {
+        ackCallback("Unauthorized client username");
+    }
+};
 
 /* ----MARK: Socket IO Events ---- */
 
@@ -167,6 +208,7 @@ io.sockets.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         cleanuponDisconnect(socket);
+        io.emit('availableCells', availableCells);
     });
 
     socket.on('registerUsername', ({username}) => {
@@ -213,26 +255,12 @@ io.sockets.on('connection', (socket) => {
     });
 
     socket.on('disconnectClient', (data, ackCallback) => {
-        console.log('disconnecting client event');
-        const { clientCellIndex, username } = data;
-        // TODO: GET CLIENTS SOCKET ID AND DISCONNECT IT BASED ON THAT
-        if (username === masterUsername) {
-            if (clientCellIndex >= 0 && clientCellIndex < cellSocketIds.length) {
-                const clientSocketId = cellSocketIds[clientCellIndex];
-                const clientCell = users[clientSocketId];
-                if (clientCell && clientCell.socket) {
-                    ackCallback("ok");
-                    clientCell.socket.disconnect(true);
-                    cleanuponDisconnect(clientCell.socket);
-                } else {
-                    ackCallback("Invalid socket for requested client");
-                }
-            } else {
-                ackCallback("Invalid `clientCellIndex` provided")
-            }
-        } else {
-            ackCallback("Unauthorized client username");
-        }
+        discconnectEventCallback('disconnectClient', data, ackCallback)
+    });
+    
+    socket.on('disconnectAllClients', (data, ackCallback) => {
+        socket.broadcast.emit('clearAllDrawings');
+        discconnectEventCallback('disconnectAllClients', data, ackCallback);
     });
 
     socket.on('clearAll', (data, ackCallback) => {
@@ -301,7 +329,7 @@ io.sockets.on('connection', (socket) => {
         }
     });
     
-    socket.on('reenableCellForClients', (data, ackCallback) => {
+    socket.on('enableCellForClients', (data, ackCallback) => {
         const { clientCellIndex, username } = data;
         // TODO: GET CLIENTS SOCKET ID AND DISCONNECT IT BASED ON THAT
         if (username === masterUsername) {

@@ -199,16 +199,15 @@
         socket.on('msgFromController', ({ controllerMessage }) => {
           if (controllerMessage) {
             const msg = controllerMessage.trim();
-            console.log("message from MASTER", msg);
-            alert("Message from Control: " + msg);
+            alert("Message from Control Manager: " + msg);
           } else {
             ackCallback("error could not send message");
           }
         })
 
         socket.on('clearAllDrawings', () => {
-          console.log(" should clear everything");
           shouldClearDrawing = true;
+          setTimeout(() => alert('All drawings were cleared by the Control Manager.'), 150);
         });
 
       }
