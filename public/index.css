@@ -165,7 +165,7 @@ body{
 .activeCell{
   background: transparent;
   cursor: crosshair;
-  border: 4px solid Blue;
+  border: 4px solid blue;
 }
 .activeCell:hover{
   background: transparent;

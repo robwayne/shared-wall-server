@@ -60,11 +60,13 @@
         top: 120px;
         right: 10px;
         min-width: 200px;
+        width: 400px;
         height: 250px;
         display: flex;
         flex-direction: column;
         justify-content: space-around;
         align-items: center;
+        
       }
 
       #clientMsgForm {
@@ -85,6 +87,44 @@
         border: 4px solid #727272;
       }
 
+      .userSelected {
+        background: transparent;
+        border: 4px solid #23d023ad;
+      }
+
+      .userSelected:hover {
+        background: #23d023ad;
+        border: none;
+      }
+
+      .free:hover{
+        background: rgba(0,0,255,0.6);
+      }
+
+      .grey {
+        background-color: transparent;
+        border: 2px solid #595959 !important;
+        color: #595959;
+      }
+
+      .grey:hover {
+        background-color: #595959 !important;
+        color: #fff  !important;
+        border: #fff  !important;
+      }
+
+      .black {
+        background-color: transparent;
+        border: 2px solid #101010 !important;
+        color: #101010;
+      }
+
+      .black:hover {
+        background-color: #101010 !important;
+        color: #fff  !important;
+        border: #fff  !important;
+      }
+      
     </style>
     <script type="text/javascript">
 
@@ -147,7 +187,6 @@
 
         $("#clientMsgForm").submit((event) => {
           const message  = $('#msgInput').val();
-          console.log("message", message);
           if (message) {
             messageClient(message);
           }
@@ -194,7 +233,11 @@
           pg.stroke(color(c));
           // pg.line(px - cellX, py-cellY, x-cellX, y-cellY);
           pg.line(px, py, x, y);
-        })
+        });
+
+        socket.on('availableCells', (data) => {     
+          setCanvasStatus(data);
+        });
 
         socket.emit('registerUsername', {username});
       }
@@ -368,6 +411,37 @@
           selectClientCell(id);
         }
       }
+
+      function setCanvasStatus(str){
+        // if identical skip the whole thing
+        if(str == canvasStatus){
+          return;
+        }
+
+        if(str.length > 10){
+          str = str.slice(10);
+        }else if(str.length < 10){
+          for(var i = 0 ; i < 10 - str.length; i++){
+            str += "0";
+          }
+        }
+        var arr = str.split("");
+
+        for(var i = 0 ; i < 10; i++){
+          arr[i] = parseInt(arr[i]);
+        }
+
+        for(var i = 0 ; i < 10; i++){
+          if(arr[i] == 0){ 
+            $(".cellBtn").eq(i).addClass("userSelected").removeClass("cellDisabled");
+          } else if (arr[i] == 1) {
+            $(".cellBtn").eq(i).removeClass("userSelected").removeClass("cellDisabled");
+          }
+        }
+        canvasStatus = str;
+      }
+
+
       
     </script>
   </head>
@@ -379,8 +453,8 @@
     </header>
 
     <div id="masterToolbar">
-      <div class="toolbarBtn" onclick="giveUpCell()">ביטול בחירה</div>
-      <div class="toolbarBtn" onclick="clearAllDrawings()">נקהו ציור</div>
+      <div class="toolbarBtn grey" onclick="giveUpCell()">ביטול בחירה</div>
+      <div class="toolbarBtn black" onclick="clearAllDrawings()">נקהו ציור</div>
       <div class="toolbarBtn" id="disableCellBtn" onclick="toggleCellInteraction()" >Disable cell</div>
       <div class="toolbarBtn" onclick="disconnectClient()" >נתק/י משתמש</div>
       <form id="clientMsgForm" action="">

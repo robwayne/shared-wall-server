@@ -194,7 +194,7 @@ io.sockets.on('connection', (socket) => {
                 availableCells = replaceAt(availableCells, activeCell, '1');
                 cellSocketIds[activeCell] = null;
                 ackCallback(availableCells);
-                setTimeout(() => io.emit('availableCells', availableCells), 300); 
+                socket.broadcast.emit('availableCells', availableCells); 
             }
         }
     });
@@ -207,6 +207,7 @@ io.sockets.on('connection', (socket) => {
                 ackCallback(availableCells);
                 availableCells = replaceAt(availableCells, requestedCell, '0');
                 cellSocketIds[requestedCell] = socketID;
+                socket.broadcast.emit('availableCells', availableCells);
             }
         }
     });

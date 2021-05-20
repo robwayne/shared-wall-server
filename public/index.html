@@ -107,7 +107,6 @@
         socket = io.connect(connectURL);
 
         socket.on('availableCells', (data) => {
-          console.log(data);
           // if the cell has been marked disabled by master,
           // and this client had a now disabled cell selected 
           // close the drawing
@@ -462,11 +461,9 @@
     <header dir="rtl">
       <h1>רחוקרוב</h1>
       <h3>בחרו איזור לצייר בו</h3>
-
     </header>
 
     <div id="toolbar">
-
       <div class="toolbarPane">
         <img class="toolbarBtn color" src="img/red.png" alt="red" onclick="changeColor(this, '#FF0000')">
         <img class="toolbarBtn color" src="img/green.png" alt="green"  onclick="changeColor(this, '#00FF00')">

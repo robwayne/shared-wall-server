@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible"">
@@ -10,12 +10,67 @@
         integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
         crossorigin="anonymous">
     </script>
+    <style>
+        body {
+            background-color: #fff;
+        }
+        .container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            /* flex-direction: column; */
+            justify-content: center;
+            align-items: center;
+        }
+        form {
+            width: 100%;
+            height: 250px;
+            font-size: 13px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: center;
+        }
+        input[type=submit] {
+            height: 40px;
+            width: 60px;
+            max-width: 80%;
+        }
+        input[type=password] {
+            height: 35px;
+            width: 90%;
+            font-size: 16px;
+        }
+        .login-rect {
+            width: 300px;
+            height: 400px;
+            display:flex;
+            flex-direction: column;
+            /* border: 2px solid #888; */
+            text-align: center;
+            box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+            align-self: center;
+        }
+        h1 {
+            font-size: 42px;
+            font-weight: bold
+        }
+        .label-img{
+            width: 60px;
+            height: 60px;
+        }
+    </style>
 </head>
 <body>
-   <form action="/master" method="post">
-        <label for="password">Master Password: </label>
-        <input id="masterPassword" type="password" name="masterPassword" placeholder="password">
-        <input type="submit" value="OK">
-    </form>
+    <div class="container">
+        <div class="login-rect">
+            <h1>Master</h1>
+            <form action="/master" method="post">
+                <label for="masterPassword"><img src="img/lock.png" class="label-img"></label>
+                <input id="masterPassword" type="password" name="masterPassword" placeholder="סיסמה">
+                <input type="submit" value="כניסה">
+            </form>
+        </div>
+    </div>
 </body>
 </html>
