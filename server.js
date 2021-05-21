@@ -80,14 +80,13 @@ app.post(
     (req, res, next) => {
         const  { masterPassword: passwordInput } = matchedData(req, { locations: ['body'] });
         let masterHash = process.env.MASTER_PW_HASH;
-        console.log("PROCESS HASH", process.env.MASTER_PW_HASH)
         if (!masterHash) {
             const { MASTER_PW_HASH: localHash } = require('./local-dev/credentials');
             masterHash = localHash;
         }
         if (passwordInput) {
             bcrypt.compare(passwordInput, masterHash, (err, isMatch) => {
-                if (isMatch && !err) {
+                if (isMatch) {
                     const  { id, projector } = matchedData(req, { locations: ['query'] });
                     let redirectPath = '/console?uid=' + masterUsername;
                     redirectPath += id ? `&id=${id}` : '';
