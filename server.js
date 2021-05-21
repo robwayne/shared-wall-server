@@ -23,7 +23,6 @@ const io = socketIO(httpServer, corsOptions);
 /* ----MARK: App Local Variables ----  */
 const users = {};
 const cellSocketIds = new Array(10);
-const allCanvasMouseData = {};
 const alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
 let availableCells = '1111111111'; 
 const port = process.env.PORT || 3000;
@@ -35,6 +34,7 @@ const replaceAt = (str, index, char) => {
 
 let masterUsername = "";
 let masterLoggedIn = false;
+let allCanvasMouseData = {};
 let masterSocket;
 
 /* ----MARK: Setup Middleware functionality for App ---- */
