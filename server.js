@@ -42,20 +42,18 @@ app.use(express.static('public'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.set('port', port);
-app.set('trust proxy', 'loopback, linklocal, uniquelocal');
+app.set('trust proxy', true);
 
+//  Redirect all HTTP requests to HTTPS
+app.use((req, res, next) => {  
+    const { STAGE_ENV } = process.env;
+    if (STAGE_ENV && STAGE_ENV === 'heroku' && !req.secure) { 
+        return res.redirect(['https://', req.get('Host'), req.url].join(''));
+    }
+    next();
+});
 
 /* ----MARK: Setup App routes and handlers ---- */
-
-// Redirect all HTTP requests to HTTPS
-// app.get('*', function(req, res) {  
-//     console.log("redirecting ", req.baseUrl, req.originalUrl, req.hostname); 
-//     if (!loopbackUrls.includes(req.hostname)) {  
-//         console.log("redirecting again"); 
-//         res.redirect('https://' + req.headers.host + req.url);
-//     }
-// });
-
 app.get('/master', (req, res, next) => {
     const options = {
         root: path.join(__dirname, 'public'),
@@ -267,6 +265,7 @@ io.sockets.on('connection', (socket) => {
     socket.on('disconnectAllClients', (data, ackCallback) => {
         socket.broadcast.emit('clearAllDrawings');
         discconnectEventCallback('disconnectAllClients', data, ackCallback);
+        allCanvasMouseData = {};
     });
 
     socket.on('clearAll', (data, ackCallback) => {
