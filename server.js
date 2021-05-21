@@ -1,3 +1,4 @@
+const bcrypt = require('bcrypt');
 const express = require('express');
 const { check, matchedData  } = require('express-validator');
 const httpModule = require('http');
@@ -30,10 +31,7 @@ const loopbackUrls = ['localhost', '127.0.0.1']
 
 const replaceAt = (str, index, char) => {
     return str.substr(0, index) + char + str.substr(index + char.length);
-}
-
-//TODO: change
-const rootPW = "123654";
+};
 
 let masterUsername = "";
 let masterLoggedIn = false;
@@ -80,13 +78,25 @@ app.post(
     check('id').optional({checkFalsy: true}).escape(),
     check('projector').optional({checkFalsy: true}).isInt(),
     (req, res, next) => {
-        const  { masterPassword } = matchedData(req, { locations: ['body'] });
-        if (masterPassword && masterPassword === rootPW) {
-            const  { id, projector } = matchedData(req, { locations: ['query'] });
-            let redirectPath = '/console?uid=' + masterUsername;
-            redirectPath += id ? `&id=${id}` : '';
-            redirectPath += projector ? `&projector=${parseInt(projector)}` : '';
-            res.redirect(redirectPath);
+        const  { masterPassword: passwordInput } = matchedData(req, { locations: ['body'] });
+        let masterHash = process.env.MASTER_PW_HASH;
+        if (!masterHash) {
+            const { MASTER_PW_HASH: localHash } = require('./local-dev/credentials');
+            masterHash = localHash;
+        }
+        if (passwordInput) {
+            bcrypt.compare(passwordInput, masterHash, (err, isMatch) => {
+                if (isMatch && !err) {
+                    const  { id, projector } = matchedData(req, { locations: ['query'] });
+                    let redirectPath = '/console?uid=' + masterUsername;
+                    redirectPath += id ? `&id=${id}` : '';
+                    redirectPath += projector ? `&projector=${parseInt(projector)}` : '';
+                    res.redirect(redirectPath);
+                } else {
+                    res.send('Incorrect Password. Refresh to ry again.');
+                }
+            })
+           
         } else {
             res.sendStatus(403);
         }
