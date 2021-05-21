@@ -245,8 +245,7 @@
 
         $("#floatingToolbarBtn").hide();
         $("#activeCellOptions").hide();
-        socket = io.connect(connectURL);
-
+      
         $("#clientMsgForm").submit((event) => {
           const message  = $('#msgInput').val();
           if (message) {
@@ -264,6 +263,19 @@
       const replaceAt = (str, index, char) => {
           return str.substr(0, index) + char + str.substr(index + char.length);
       }
+
+      const drawMouseData = (mouseData) => {
+        if (mouseData) {
+          const {_col, x, y, px, py, _weight, canvasIndex } = mouseData;
+            const c = _col || "#000000";
+            // pg.stroke(color(_col));
+            // pg.strokeWeight(strokeWidth);
+            pg.strokeWeight(_weight);
+            pg.stroke(color(c));
+            // pg.line(px - cellX, py-cellY, x-cellX, y-cellY);
+            pg.line(px, py, x, y);
+        }
+      };
 
       function setup(){
         let cnv = createCanvas(1920, 1080);
@@ -283,18 +295,24 @@
           setScale(0.5);
         }
 
-        // Callback function
-        socket.on('mouse', (data) => {
-          // if (canvasIndex && p5Instances[canvasIndex].parent() )
+        // ----Connect To Socket----
+        socket = io.connect(connectURL);
 
-          const {_col, x, y, px, py, _weight, canvasIndex} = data;
-          const c = _col || "#000000";
-          // pg.stroke(color(_col));
-          // pg.strokeWeight(strokeWidth);
-          pg.strokeWeight(_weight);
-          pg.stroke(color(c));
-          // pg.line(px - cellX, py-cellY, x-cellX, y-cellY);
-          pg.line(px, py, x, y);
+        //  ----Register Socket Event Handlers----
+        socket.on('allCanvasMouseData', (allMouseData) => {
+          console.log('all mouse data', allMouseData);
+          if (allMouseData) {
+            Object.keys(allMouseData).forEach((key) => {
+              const canvasDataArr = allMouseData[key];
+              for (let i=0;i<canvasDataArr.length;i++) {
+                drawMouseData(canvasDataArr[i]);
+              }
+            })
+          }
+        });
+
+        socket.on('mouse', (data) => {
+          drawMouseData(data);
         });
 
         socket.on('availableCells', (data) => {     
@@ -445,12 +463,11 @@
 
       const emitMessageClient = (clientMessage) => {
         socket.emit('messageClient', {clientCellIndex: activeCell, username, messageForClient: clientMessage}, (ack) => {
-          console.log(ack);
+          console.log("Message request response: ", ack);
         })  
       }
 
       const emitClearAllDrawings = () => {
-        console.log("sending CLEAR ALL message")
         socket.emit('clearAll', {username}, (ack) => {
           if (ack === "ok") {
             shouldClearDrawing = true;
@@ -460,7 +477,7 @@
 
       const emitClearClientDrawing = () => {
         socket.emit('clearClientDrawing', {username, clientCellIndex: activeCell}, (ack) => {
-          console.log(ack);
+          console.log("Acknowledgement response: ", ack);
         });  
       };
 

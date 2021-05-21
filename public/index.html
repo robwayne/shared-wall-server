@@ -101,27 +101,7 @@
           }
         }
 
-
         $("#toolbar").hide();
-
-        socket = io.connect(connectURL);
-
-        socket.on('availableCells', (data) => {
-          // if the cell has been marked disabled by master,
-          // and this client had a now disabled cell selected 
-          // close the drawing
-          if (activeCell !== -1 && data[activeCell] === 2) {
-            closeDrawing();
-          }
-          setCanvasStatus(data);
-        });
-
-        // for (let i=0;i<10;i++) {
-        // 	const parentElementID = 'sketch-' + i;
-        // 	const p5Instance = new p5(instance, parentElementID);
-        // 	p5Instances.push(p5Instance);
-        // }
-
       });
 
 
@@ -139,9 +119,7 @@
 
 
       function requestCell(requestedCell){
-
-        console.log("request: " + requestedCell);
-
+        console.log("requesting cell: " + requestedCell);
         // request the cell ID from the  server
         // wait for a response and then call:
         socket.emit('requestCell', { socketID:socket.id, requestedCell }, function(response){
@@ -158,16 +136,13 @@
             }
         });
 
-
-
       }
-
 
       function setup(){
         let cnv = createCanvas(1920, 1080);
         pg = createGraphics(width, height);
         pd = createGraphics(width/5, height/4);
-        // setCanvasStatus("1110110011");
+
         cnv.parent('p5Container');
         smooth(4);
 
@@ -182,19 +157,35 @@
           setScale(0.75);
         }
 
-        // Callback function
-        socket.on('mouse', (data) => {
-          // if (canvasIndex && p5Instances[canvasIndex].parent() )
+        // ----Connect To Socket----
+        socket = io.connect(connectURL);
 
-          const {_col, x, y, px, py, _weight, canvasIndex} = data;
-          const c = _col || "#000000";
-          // pg.stroke(color(_col));
-          // pg.strokeWeight(strokeWidth);
-          pg.strokeWeight(_weight);
-          pg.stroke(color(c));
-          // pg.line(px - cellX, py-cellY, x-cellX, y-cellY);
-          pg.line(px, py, x, y);
-        })
+        //  ----Register Socket Event Handlers----
+        socket.on('allCanvasMouseData', (allMouseData) => {
+          console.log('all mouse data', allMouseData);
+          if (allMouseData) {
+            Object.keys(allMouseData).forEach((key) => {
+              const canvasDataArr = allMouseData[key];
+              for (let i=0;i<canvasDataArr.length;i++) {
+                drawMouseData(canvasDataArr[i]);
+              }
+            })
+          }
+        });
+
+        socket.on('availableCells', (data) => {
+          // if the cell has been marked disabled by master,
+          // and this client had a now disabled cell selected 
+          // close the drawing
+          if (activeCell !== -1 && data[activeCell] === 2) {
+            closeDrawing();
+          }
+          setCanvasStatus(data);
+        });
+
+        socket.on('mouse', (data) => {
+          drawMouseData(data);
+        });
 
         socket.on('msgFromController', ({ controllerMessage }) => {
           if (controllerMessage) {
@@ -209,7 +200,6 @@
           shouldClearDrawing = true;
           setTimeout(() => alert('All drawings were cleared by the Control Manager.'), 150);
         });
-
       }
 
       function draw(){
@@ -286,7 +276,6 @@
 
       }
 
-
       function mousePressed(){
         if(activeCell > -1){
           cellX = width - (cellpositions[activeCell][0]+1)*cellW;
@@ -299,6 +288,19 @@
           pos.py = mouseY;
         }
       }
+
+      const drawMouseData = (mouseData) => {
+        if (mouseData) {
+          const {_col, x, y, px, py, _weight, canvasIndex } = mouseData;
+            const c = _col || "#000000";
+            // pg.stroke(color(_col));
+            // pg.strokeWeight(strokeWidth);
+            pg.strokeWeight(_weight);
+            pg.stroke(color(c));
+            // pg.line(px - cellX, py-cellY, x-cellX, y-cellY);
+            pg.line(px, py, x, y);
+        }
+      };
 
       function clearDrawings(){
         pg.clear();
@@ -386,8 +388,6 @@
       }
 
       function giveUpCell(){
-
-        console.log("relinquish cell " + activeCell);
         pg.image(pd, cellX, cellY);
         // tell the server to give up this cell
         $(".cellBtn").eq(activeCell).addClass("free");
@@ -395,7 +395,6 @@
 
 
         socket.emit('relinquishCell', { socketID:socket.id, activeCell}, function(response){
-          console.log(response);
           setCanvasStatus(response);
         });
 

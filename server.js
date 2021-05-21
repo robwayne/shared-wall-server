@@ -23,11 +23,11 @@ const io = socketIO(httpServer, corsOptions);
 /* ----MARK: App Local Variables ----  */
 const users = {};
 const cellSocketIds = new Array(10);
-const sentData = {};
+const allCanvasMouseData = {};
 const alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
 let availableCells = '1111111111'; 
 const port = process.env.PORT || 3000;
-const loopbackUrls = ['localhost', '127.0.0.1']
+
 
 const replaceAt = (str, index, char) => {
     return str.substr(0, index) + char + str.substr(index + char.length);
@@ -57,7 +57,6 @@ app.set('trust proxy', 'loopback, linklocal, uniquelocal');
 // });
 
 app.get('/master', (req, res, next) => {
-    console.log("loading master"); 
     const options = {
         root: path.join(__dirname, 'public'),
         headers: {
@@ -185,7 +184,6 @@ const disconnectDrawingClient = (clientCellIndex, ackCallback) => {
 }
 
 const discconnectEventCallback = (event, data, ackCallback) => {
-    console.log('disconnecting client event');
     const { username } = data;
     if (username && username === masterUsername) {
         if (event === 'disconnectAllClients') {
@@ -210,8 +208,6 @@ const discconnectEventCallback = (event, data, ackCallback) => {
 
 io.sockets.on('connection', (socket) => {
 
-    io.emit('availableCells', availableCells);
-
     if (!users[socket.id]) {
         users[socket.id] = {socket, activeCell: -1};
     }
@@ -229,10 +225,10 @@ io.sockets.on('connection', (socket) => {
 
     socket.on('mouse', (data) => {
         const { canvasIndex } = data;
-        if (!sentData[canvasIndex]) {
-            sentData[canvasIndex] = [];
+        if (!allCanvasMouseData[canvasIndex]) {
+            allCanvasMouseData[canvasIndex] = [];
         }
-        sentData[canvasIndex].push(data);
+        allCanvasMouseData[canvasIndex].push(data);
         socket.broadcast.emit('mouse', data)
     }); 
     
@@ -277,6 +273,7 @@ io.sockets.on('connection', (socket) => {
         const { username } = data;
         if (username === masterUsername) {
             ackCallback("ok");
+            allCanvasMouseData = {};
             socket.broadcast.emit('clearAllDrawings');
         } else {
             ackCallback("Unauthorized client username");
@@ -355,7 +352,9 @@ io.sockets.on('connection', (socket) => {
             ackCallback("Unauthorized client username");
         }
     });
-   
+
+    io.to(socket.id).emit('availableCells', availableCells);
+    io.to(socket.id).emit('allCanvasMouseData', allCanvasMouseData);
 });
 
 httpServer.listen(port, () => {
