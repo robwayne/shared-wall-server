@@ -227,7 +227,7 @@
       $(function() {
         vid = $("#youtubeVid");
 
-        username = urlParams.get('uid');
+        username = urlParams.get('sid');
         var liveLink = urlParams.get('id');
 
         if(liveLink != null){
@@ -296,7 +296,7 @@
         }
 
         // ----Connect To Socket----
-        socket = io.connect(connectURL);
+        socket = io.connect();
 
         //  ----Register Socket Event Handlers----
         socket.on('allCanvasMouseData', (allMouseData) => {
@@ -543,6 +543,8 @@
             $(".cellBtn").eq(i).addClass("userSelected").removeClass("cellDisabled");
           } else if (arr[i] == 1) {
             $(".cellBtn").eq(i).removeClass("userSelected").removeClass("cellDisabled");
+          } else if (arr[i] == 2) {
+            $(".cellBtn").eq(i).removeClass("userSelected").addClass("cellDisabled");
           }
         }
         canvasStatus = str;

@@ -146,7 +146,7 @@
         }
 
         // ----Connect To Socket----
-        socket = io.connect(connectURL);
+        socket = io.connect();
 
         //  ----Register Socket Event Handlers----
         socket.on('allCanvasMouseData', (allMouseData) => {
@@ -165,8 +165,10 @@
           // if the cell has been marked disabled by master,
           // and this client had a now disabled cell selected 
           // close the drawing
-          if (activeCell !== -1 && data[activeCell] === 2) {
+          console.log("received this ", data, activeCell)
+          if (activeCell !== -1 && data[activeCell] == '2') {
             closeDrawing();
+            alert('Your canvas was restricted by the Controller and has been closed');
           }
           setCanvasStatus(data);
         });
@@ -363,9 +365,7 @@
 
         elem.addClass("activeCell").removeClass("busy").removeClass("free");
 
-        $("#toolbar").show();
-        // show the toolar
-        // allow p5 to draw in that region
+        $("#toolbar").show();     
       }
 
       function closeDrawing(){

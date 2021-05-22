@@ -23,7 +23,8 @@ const io = socketIO(httpServer, corsOptions);
 /* ----MARK: App Local Variables ----  */
 const users = {};
 const cellSocketIds = new Array(10);
-const alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
+const urlCharset = "abcdefghijklmnopqrstuvwxyz0123456789-_~";
+const sessionIDLength = 32;
 let availableCells = '1111111111'; 
 const port = process.env.PORT || 3000;
 
@@ -85,7 +86,7 @@ app.post(
             bcrypt.compare(passwordInput, masterHash, (err, isMatch) => {
                 if (isMatch) {
                     const  { id, projector } = matchedData(req, { locations: ['query'] });
-                    let redirectPath = '/console?uid=' + masterUsername;
+                    let redirectPath = '/console?sid=' + masterUsername;
                     redirectPath += id ? `&id=${id}` : '';
                     redirectPath += projector ? `&projector=${parseInt(projector)}` : '';
                     res.redirect(redirectPath);
@@ -107,9 +108,9 @@ app.get('/console', (req, res, next) => {
         return;
     }
 
-    const { query: { uid: username }} = req;
+    const { query: { sid: sessionUsername }} = req;
 
-    if (username && masterUsername === username) {
+    if (sessionUsername && masterUsername === sessionUsername) {
         const options = {
             root: path.join(__dirname, 'public'),
             headers: {
@@ -120,7 +121,7 @@ app.get('/console', (req, res, next) => {
         
         res.sendFile('console-root.html', options, (err) => {
             if (err) {
-                console.err("error sending console file", username)
+                console.err("error sending console file", sessionUsername)
                 next(err);
                 return;
             }
@@ -136,9 +137,9 @@ app.get('/console', (req, res, next) => {
 
 const generateMasterUsername = () => {
     if (masterUsername.length) masterUsername = "";
-    for(let i=0;i<16;i++) {
-        const index = Math.round(Math.random() * (alphabet.length - 1));
-        const c = index % masterUsername.length === 0 ? alphabet[index].toUpperCase() : alphabet[index].toLowerCase();
+    for(let i=0;i<sessionIDLength;i++) {
+        const index = Math.round(Math.random() * (urlCharset.length - 1));
+        const c = index % masterUsername.length === 0 ? urlCharset[index].toUpperCase() : urlCharset[index].toLowerCase();
         masterUsername += c;
     }
 };
@@ -154,7 +155,7 @@ const resetMaster = (socket) => {
 const cleanuponDisconnect = (socket) => {
     if (socket && users[socket.id]) {
         const { activeCell } = users[socket.id];
-        if (activeCell >= 0) {
+        if (activeCell >= 0 && availableCells[activeCell] != '2') {
             availableCells = replaceAt(availableCells, activeCell, '1');
         }
         resetMaster(socket);
@@ -323,7 +324,7 @@ io.sockets.on('connection', (socket) => {
                 ackCallback("ok");
                 availableCells = replaceAt(availableCells, clientCellIndex, '2');
                 cellSocketIds[clientCellIndex] = null;
-                socket.broadcast.emit('availableCells', availableCells);
+                io.emit('availableCells', availableCells);
             } else {
                 ackCallback("Invalid `clientCellIndex` provided")
             }
