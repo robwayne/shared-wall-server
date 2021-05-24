@@ -1,4 +1,5 @@
 const bcrypt = require('bcrypt');
+const cors = require('cors');
 const express = require('express');
 const { check, matchedData  } = require('express-validator');
 const httpModule = require('http');
@@ -33,7 +34,7 @@ const replaceAt = (str, index, char) => {
     return str.substr(0, index) + char + str.substr(index + char.length);
 };
 
-let masterUsername = "";
+let masterUsernameHash;
 let masterLoggedIn = false;
 let allCanvasMouseData = {};
 let masterSocket;
@@ -41,6 +42,7 @@ let masterSocket;
 /* ----MARK: Setup Middleware functionality for App ---- */
 app.use(express.static('public'));
 app.use(express.json());
+app.use(cors(corsOptions));
 app.use(express.urlencoded({ extended: true }));
 app.set('port', port);
 app.set('trust proxy', true);
@@ -77,27 +79,28 @@ app.post(
     check('projector').optional({checkFalsy: true}).isInt(),
     (req, res, next) => {
         const  { masterPassword: passwordInput } = matchedData(req, { locations: ['body'] });
-        let masterHash = process.env.MASTER_PW_HASH;
-        if (!masterHash) {
+        let masterPasswordHash = process.env.MASTER_PW_HASH;
+        if (!masterPasswordHash) {
             const { MASTER_PW_HASH: localHash } = require('./local-dev/credentials');
-            masterHash = localHash;
+            masterPasswordHash = localHash;
         }
-        if (passwordInput) {
-            bcrypt.compare(passwordInput, masterHash, (err, isMatch) => {
-                if (isMatch) {
-                    const  { id, projector } = matchedData(req, { locations: ['query'] });
-                    let redirectPath = '/console?sid=' + masterUsername;
-                    redirectPath += id ? `&id=${id}` : '';
-                    redirectPath += projector ? `&projector=${parseInt(projector)}` : '';
-                    res.redirect(redirectPath);
-                } else {
-                    res.send('Incorrect Password. Refresh to ry again.');
-                }
-            })
-           
+        if (passwordInput && !masterLoggedIn) {
+            const isMatch = bcrypt.compareSync(passwordInput, masterPasswordHash);
+            if (isMatch) {
+                const  { id, projector } = matchedData(req, { locations: ['query'] });
+                const masterUsername = genMasterUsernameHash();
+                let redirectPath = '/console?sid=' + masterUsername;
+                redirectPath += id ? `&id=${id}` : '';
+                redirectPath += projector ? `&projector=${parseInt(projector)}` : '';
+                return res.redirect(redirectPath);
+            } else {
+                return res.send('Incorrect Password. Refresh to ry again.');
+            }
         } else {
-            res.sendStatus(403);
+            return res.sendStatus(403);
         }
+
+        next();
     }   
 );
 
@@ -108,9 +111,9 @@ app.get('/console', (req, res, next) => {
         return;
     }
 
-    const { query: { sid: sessionUsername }} = req;
-
-    if (sessionUsername && masterUsername === sessionUsername) {
+    const { query: { sid }} = req;
+    const isMatch = bcrypt.compareSync(sid, masterUsernameHash);
+    if (isMatch) {
         const options = {
             root: path.join(__dirname, 'public'),
             headers: {
@@ -135,20 +138,28 @@ app.get('/console', (req, res, next) => {
 
 /* ----MARK: Private Methods ---- */
 
-const generateMasterUsername = () => {
-    if (masterUsername.length) masterUsername = "";
+const genMasterUsernameHash = () => {
+    let masterUsername = "";
     for(let i=0;i<sessionIDLength;i++) {
         const index = Math.round(Math.random() * (urlCharset.length - 1));
         const c = index % masterUsername.length === 0 ? urlCharset[index].toUpperCase() : urlCharset[index].toLowerCase();
         masterUsername += c;
     }
+
+    const hashed = bcrypt.hashSync(masterUsername, 10);
+    if (hashed) {
+        masterUsernameHash = hashed;
+    } else {
+        masterUsernameHash = masterUsername;
+    }
+
+    return masterUsername;
 };
 
 const resetMaster = (socket) => {
     if (socket && masterSocket && socket.id === masterSocket.id) {
         masterSocket = null;
         masterLoggedIn = false;
-        generateMasterUsername();
     }
 }
 
@@ -184,7 +195,8 @@ const disconnectDrawingClient = (clientCellIndex, ackCallback) => {
 
 const discconnectEventCallback = (event, data, ackCallback) => {
     const { username } = data;
-    if (username && username === masterUsername) {
+    const isMatch = bcrypt.compareSync(username, masterUsernameHash);
+    if (isMatch) {
         if (event === 'disconnectAllClients') {
             for(let i=0;i<cellSocketIds.length;i++) {
                 disconnectDrawingClient(i);
@@ -217,9 +229,10 @@ io.sockets.on('connection', (socket) => {
     });
 
     socket.on('registerUsername', ({username}) => {
-        if (masterLoggedIn && username === masterUsername) {
+        const isMatch = bcrypt.compareSync(username, masterUsernameHash);
+        if (isMatch) {
             masterSocket = socket;
-       }
+        }
     }); 
 
     socket.on('mouse', (data) => {
@@ -270,28 +283,36 @@ io.sockets.on('connection', (socket) => {
 
     socket.on('clearAll', (data, ackCallback) => {
         const { username } = data;
-        if (username === masterUsername) {
-            ackCallback("ok");
-            allCanvasMouseData = {};
-            socket.broadcast.emit('clearAllDrawings');
-        } else {
-            ackCallback("Unauthorized client username");
+        if (username) {
+            const isMatch = bcrypt.compareSync(username, masterUsernameHash);
+            if (isMatch) {
+                ackCallback("ok");
+                allCanvasMouseData = {};
+                socket.broadcast.emit('clearAllDrawings');
+            } else {
+                ackCallback("Unauthorized client username");
+            }
         }
     });
 
     socket.on('clearClientDrawing', (data, ackCallback) => {
         const { clientCellIndex, username } = data;
-        if (username === masterUsername) {
-            if (clientCellIndex >= 0 && clientCellIndex < cellSocketIds.length) {
-                const clientSocketId = cellSocketIds[clientCellIndex];
-                if (clientSocketId) {
-                    socket.to(clientSocketId).emit('clear');
-                    ackCallback("ok");
+        if (username) {
+            const isMatch = bcrypt.compareSync(username, masterUsernameHash);
+            if (isMatch) {
+                if (clientCellIndex >= 0 && clientCellIndex < cellSocketIds.length) {
+                    const clientSocketId = cellSocketIds[clientCellIndex];
+                    if (clientSocketId) {
+                        socket.to(clientSocketId).emit('clear');
+                        ackCallback("ok");
+                    } else {
+                        ackCallback("Invalid socket for requested client");
+                    }
                 } else {
-                    ackCallback("Invalid socket for requested client");
+                    ackCallback("Invalid `clientCellIndex` provided")
                 }
             } else {
-                ackCallback("Invalid `clientCellIndex` provided")
+                ackCallback("Unauthorized client username");
             }
         } else {
             ackCallback("Unauthorized client username");
@@ -300,17 +321,22 @@ io.sockets.on('connection', (socket) => {
 
     socket.on('messageClient', (data, ackCallback) => {
         const { clientCellIndex, username, messageForClient } = data;
-        if (username === masterUsername) {
-            if (clientCellIndex >= 0 && clientCellIndex < cellSocketIds.length) {
-                let clientSocketId = cellSocketIds[clientCellIndex];
-                if (clientSocketId) {
-                    socket.to(clientSocketId).emit('msgFromController', { controllerMessage: messageForClient })
-                    ackCallback("ok");
+        if (username) {
+            const isMatch = bcrypt.compareSync(username, masterUsernameHash);
+            if (isMatch) {
+                if (clientCellIndex >= 0 && clientCellIndex < cellSocketIds.length) {
+                    let clientSocketId = cellSocketIds[clientCellIndex];
+                    if (clientSocketId) {
+                        socket.to(clientSocketId).emit('msgFromController', { controllerMessage: messageForClient })
+                        ackCallback("ok");
+                    } else {
+                        ackCallback("Invalid socket for requested client");
+                    }
                 } else {
-                    ackCallback("Invalid socket for requested client");
+                    ackCallback("Invalid `clientCellIndex` provided")
                 }
             } else {
-                ackCallback("Invalid `clientCellIndex` provided")
+                ackCallback("Unauthorized client username");
             }
         } else {
             ackCallback("Unauthorized client username");
@@ -319,14 +345,19 @@ io.sockets.on('connection', (socket) => {
 
     socket.on('disableCellForClients', (data, ackCallback) => {
         const { clientCellIndex, username } = data;
-        if (username === masterUsername) {
-            if (clientCellIndex >= 0 && clientCellIndex < availableCells.length) {
-                ackCallback("ok");
-                availableCells = replaceAt(availableCells, clientCellIndex, '2');
-                cellSocketIds[clientCellIndex] = null;
-                io.emit('availableCells', availableCells);
+        if (username) {
+            const isMatch = bcrypt.compareSync(username, masterUsernameHash);
+            if (isMatch) {
+                if (clientCellIndex >= 0 && clientCellIndex < availableCells.length) {
+                    ackCallback("ok");
+                    availableCells = replaceAt(availableCells, clientCellIndex, '2');
+                    cellSocketIds[clientCellIndex] = null;
+                    io.emit('availableCells', availableCells);
+                } else {
+                    ackCallback("Invalid `clientCellIndex` provided")
+                }
             } else {
-                ackCallback("Invalid `clientCellIndex` provided")
+                ackCallback("Unauthorized client username");
             }
         } else {
             ackCallback("Unauthorized client username");
@@ -335,14 +366,19 @@ io.sockets.on('connection', (socket) => {
     
     socket.on('enableCellForClients', (data, ackCallback) => {
         const { clientCellIndex, username } = data;
-        if (username === masterUsername) {
-            if (clientCellIndex >= 0 && clientCellIndex < availableCells.length) {
-                ackCallback("ok");
-                availableCells = replaceAt(availableCells, clientCellIndex, '1');
-                cellSocketIds[clientCellIndex] = null;
-                socket.broadcast.emit('availableCells', availableCells);
+        if (username) {
+            const isMatch = bcrypt.compareSync(username, masterUsernameHash);
+            if (isMatch) {
+                if (clientCellIndex >= 0 && clientCellIndex < availableCells.length) {
+                    ackCallback("ok");
+                    availableCells = replaceAt(availableCells, clientCellIndex, '1');
+                    cellSocketIds[clientCellIndex] = null;
+                    socket.broadcast.emit('availableCells', availableCells);
+                } else {
+                    ackCallback("Invalid `clientCellIndex` provided")
+                }
             } else {
-                ackCallback("Invalid `clientCellIndex` provided")
+                ackCallback("Unauthorized client username");
             }
         } else {
             ackCallback("Unauthorized client username");
@@ -354,6 +390,5 @@ io.sockets.on('connection', (socket) => {
 });
 
 httpServer.listen(port, () => {
-  generateMasterUsername();
   console.log('listening on *:', port);
 });

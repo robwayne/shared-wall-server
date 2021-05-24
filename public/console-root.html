@@ -133,11 +133,11 @@
       .cellDisabled {
         background: transparent;
         cursor: pointer;
-        border: 4px solid #eb2626;
+        border: 4px solid #eb2626 !important;
       }
 
       .cellDisabled:hover {
-        background:  #eb2626;
+        background:  #eb2626 !important;
         border: none;
       }
 
@@ -189,9 +189,6 @@
     <script type="text/javascript">
 
       let socket;
-      const loopbackURLs = ['localhost', '127.0.0.1'];
-      const development = loopbackURLs.includes(window.location.hostname);
-      const connectURL = development ? "http://localhost:3000" : "https://midarom.herokuapp.com";
       var dispScale = 0.5;
       var pg;
       var pd;
@@ -463,7 +460,11 @@
 
       const emitMessageClient = (clientMessage) => {
         socket.emit('messageClient', {clientCellIndex: activeCell, username, messageForClient: clientMessage}, (ack) => {
-          console.log("Message request response: ", ack);
+          if (ack == "ok") {
+            alert("Message sent");
+          } else {
+            alert("Message failed to send: ", ack);
+          }
         })  
       }
 

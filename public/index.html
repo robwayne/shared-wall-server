@@ -19,9 +19,6 @@
     <script type="text/javascript">
       let socket;
 
-      const loopbackURLs = ['localhost', '127.0.0.1'];
-      const development = loopbackURLs.includes(window.location.hostname);
-      const connectURL = development ? "http://localhost:3000" : "https://midarom.herokuapp.com";
       var dispScale = 0.5;
       var pg;
       var pd;
