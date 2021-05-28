@@ -261,13 +261,14 @@
           return str.substr(0, index) + char + str.substr(index + char.length);
       }
 
-      const drawMouseData = (mouseData) => {
+      const drawMouseData = (mouseData, isClearingDrawing = false) => {
         if (mouseData) {
           const {_col, x, y, px, py, _weight, canvasIndex } = mouseData;
-            const c = _col || "#000000";
+            const c = isClearingDrawing ? "#FFFFFF" : _col;
             // pg.stroke(color(_col));
             // pg.strokeWeight(strokeWidth);
-            pg.strokeWeight(_weight);
+            const w = isClearingDrawing ? 12 : _weight;
+            pg.strokeWeight(w);
             pg.stroke(color(c));
             // pg.line(px - cellX, py-cellY, x-cellX, y-cellY);
             pg.line(px, py, x, y);
@@ -297,7 +298,6 @@
 
         //  ----Register Socket Event Handlers----
         socket.on('allCanvasMouseData', (allMouseData) => {
-          console.log('all mouse data', allMouseData);
           if (allMouseData) {
             Object.keys(allMouseData).forEach((key) => {
               const canvasDataArr = allMouseData[key];
@@ -305,6 +305,15 @@
                 drawMouseData(canvasDataArr[i]);
               }
             })
+          }
+        });
+
+        socket.on('clearDrawing', (data) => {
+          if (data) {
+            const {clientCellIndex, pointsToClear } = data;
+            for (let i=0;i<pointsToClear.length;i++) {
+              drawMouseData(pointsToClear[i], true);
+            }
           }
         });
 
@@ -565,6 +574,7 @@
         <h3>ציור זה</h3>
         <div class="toolbarBtn grey" onclick="giveUpCell()">ביטול בחירה</div>
         <div class="toolbarBtn" id="disableCellBtn" onclick="toggleCellInteraction()" >חסום בחירה</div>
+        <div class="toolbarBtn" onclick="emitClearClientDrawing()" >Clear Drawing</div>
         <div class="toolbarBtn" onclick="emitDisconnectClient()" >נתק משתמש</div>
         <form id="clientMsgForm">
           <label for="msgInput">שלח הודעה:</label>
@@ -597,7 +607,7 @@
         <div id="p5Container"></div>
       </div>
       <div class="youtubeContainer">
-          <iframe id="youtubeVid" width="1920" height="1080" src="https://www.youtube.com/embed/21X5lGlDOfg?autoplay=1&mute=1&wmode=opaque&showinfo=0&controls=0" autoplay title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" ></iframe>
+        <iframe id="youtubeVid" width="1920" height="1080" src="https://www.youtube.com/embed/live_stream?channel=UCaUFRz-HT2Rne3KvIdU-04A&autoplay=1&mute=1&wmode=opaque&showinfo=0&controls=0" autoplay title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" ></iframe>
       </div>
     </div>
   </body>

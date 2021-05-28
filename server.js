@@ -300,14 +300,11 @@ io.sockets.on('connection', (socket) => {
         if (username) {
             const isMatch = bcrypt.compareSync(username, masterUsernameHash);
             if (isMatch) {
-                if (clientCellIndex >= 0 && clientCellIndex < cellSocketIds.length) {
-                    const clientSocketId = cellSocketIds[clientCellIndex];
-                    if (clientSocketId) {
-                        socket.to(clientSocketId).emit('clear');
-                        ackCallback("ok");
-                    } else {
-                        ackCallback("Invalid socket for requested client");
-                    }
+                if (allCanvasMouseData[clientCellIndex]) {
+                    const cellMouseData = { clientCellIndex, pointsToClear: allCanvasMouseData[clientCellIndex] };
+                    ackCallback("ok");
+                    io.emit('clearDrawing', cellMouseData);
+                    allCanvasMouseData[clientCellIndex] = [];
                 } else {
                     ackCallback("Invalid `clientCellIndex` provided")
                 }

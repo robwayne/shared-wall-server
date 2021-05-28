@@ -147,7 +147,6 @@
 
         //  ----Register Socket Event Handlers----
         socket.on('allCanvasMouseData', (allMouseData) => {
-          console.log('all mouse data', allMouseData);
           if (allMouseData) {
             Object.keys(allMouseData).forEach((key) => {
               const canvasDataArr = allMouseData[key];
@@ -168,6 +167,19 @@
             alert('Your canvas was restricted by the Controller and has been closed');
           }
           setCanvasStatus(data);
+        });
+
+        socket.on('clearDrawing', (data) => {
+          if (data) {
+            const {clientCellIndex, pointsToClear } = data;
+            if (clientCellIndex === activeCell) {
+              pd.clear();
+            } else {
+              for (let i=0;i<pointsToClear.length;i++) {
+                drawMouseData(pointsToClear[i], true);
+              }
+            }
+          }
         });
 
         socket.on('mouse', (data) => {
@@ -276,13 +288,14 @@
         }
       }
 
-      const drawMouseData = (mouseData) => {
+      const drawMouseData = (mouseData, isClearingDrawing = false) => {
         if (mouseData) {
           const {_col, x, y, px, py, _weight, canvasIndex } = mouseData;
-            const c = _col || "#000000";
+            const c = isClearingDrawing ? "#FFFFFF" : _col;
             // pg.stroke(color(_col));
             // pg.strokeWeight(strokeWidth);
-            pg.strokeWeight(_weight);
+            const w = isClearingDrawing ? 15 : _weight;
+            pg.strokeWeight(w);
             pg.stroke(color(c));
             // pg.line(px - cellX, py-cellY, x-cellX, y-cellY);
             pg.line(px, py, x, y);
