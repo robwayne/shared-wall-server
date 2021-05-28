@@ -149,16 +149,17 @@ body{
   background: transparent;
 }
 .busy:hover{
-  background:  rgba(255, 0,0, 0.5);
+  background:  rgba(242, 116, 5, 0.6);
 }
 
 .cellDisabled {
-  background: #979797;
-  cursor: not-allowed;
-  border: 4px solid #727272;
+  background: transparent;
+  cursor: pointer;
+  border: 4px solid rgba(235, 38, 38, 0.4) !important;
 }
+
 .cellDisabled:hover {
-  background:  #727272;
+  background:  rgba(237, 32, 32, 0.4) !important;
   border: none;
 }
 
@@ -187,8 +188,6 @@ body{
 #p5Contianer{
   position: absolute;
 }
-
-
 
 .youtubeContainer{
   pointer-events:none;
