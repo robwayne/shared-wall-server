@@ -69,6 +69,9 @@
 
       var vid;
       $(function() {
+
+
+
         vid = $("#youtubeVid");
 
         var liveLink = urlParams.get('id');
@@ -86,7 +89,25 @@
           }
         }
 
+
+
         $("#toolbar").hide();
+        $("header").hide();
+        $(".main").hide();
+
+
+        $("#inBtn").click(function(){
+          $("header").show();
+          $(".main").show();
+          $(".intro").hide();
+        })
+
+
+
+
+
+
+
       });
 
 
@@ -159,7 +180,7 @@
 
         socket.on('availableCells', (data) => {
           // if the cell has been marked disabled by master,
-          // and this client had a now disabled cell selected 
+          // and this client had a now disabled cell selected
           // close the drawing
           console.log("received this ", data, activeCell)
           if (activeCell !== -1 && data[activeCell] == '2') {
@@ -375,7 +396,7 @@
 
         elem.addClass("activeCell").removeClass("busy").removeClass("free");
 
-        $("#toolbar").show();     
+        $("#toolbar").show();
       }
 
       function closeDrawing(){
@@ -438,7 +459,7 @@
         }
 
         for(var i = 0 ; i < 10; i++){
-          if(arr[i] == 0){ 
+          if(arr[i] == 0){
             $(".cellBtn").eq(i).addClass("busy").removeClass("free").removeClass("cellDisabled");
           } else if(arr[i] == 1){
             $(".cellBtn").eq(i).addClass("free").removeClass("busy").removeClass("cellDisabled");
@@ -454,12 +475,34 @@
   </head>
   <body>
 
+    <div class="intro">
+      <div class="introInner">
+        <h2>ברוכים הבאים לפרוייקט</h2>
+        <h1>רָחוֹקָרוֹב</h1>
+        <br>
+        <h2>בעמוד הבא תראו את קיר הציור של רָחוֹקָרוֹב, שעליו מציירים בו זמנית אנשים בשנקר ואנשים דרך מחשבים בבית</h2>
+        <br>
+        <h2>תוכלו לבחור איזור ולצייר בו!</h2>
+        <br>
+        <h2>מומלץ להסתכל ולהתייחס לציורים שלידכם</h2>
+        <br>
+        <h2 id="inBtn">כניסה</h2>
+      </div>
+    </div>
+
+
     <header dir="rtl">
-      <h1>רחוקרוב</h1>
+      <h1>רָחוֹקָרוֹב</h1>
       <h3>בחרו איזור לצייר בו</h3>
     </header>
 
     <div id="toolbar">
+
+      <div class="toolbarPane innerFrame">
+        <!-- <img class="toolbarBtn" src="img/in.png" alt="zoom in" onclick="setScale(1.5)"> -->
+        <img class="toolbarBtn outBtn" src="img/out.png" alt="zoom out" onclick="closeDrawing()">
+      </div>
+
       <div class="toolbarPane">
         <img class="toolbarBtn color" src="img/red.png" alt="red" onclick="changeColor(this, '#FF0000')">
         <img class="toolbarBtn color" src="img/green.png" alt="green"  onclick="changeColor(this, '#00FF00')">
@@ -474,10 +517,7 @@
         <img class="toolbarBtn line" src="img/L.png" alt="L"  onclick="changeWeight(this, 10)">
       </div>
 
-      <div class="toolbarPane">
-        <!-- <img class="toolbarBtn" src="img/in.png" alt="zoom in" onclick="setScale(1.5)"> -->
-        <img class="toolbarBtn" src="img/out.png" alt="zoom out" onclick="closeDrawing()">
-      </div>
+
     </div>
 
     <div class="main">

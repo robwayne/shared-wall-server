@@ -193,3 +193,43 @@ body{
   pointer-events:none;
   z-index: 0;
 }
+
+.innerFrame{
+  margin-bottom: 8px;
+}
+
+.outBtn{
+  border: 2px solid black;
+}
+
+.intro{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+.introInner{
+  width: 533px;
+}
+.introInner *{
+  text-align: center;
+}
+
+.introInner h1{
+  font-size: 54px;
+}
+.introInner h2{
+  font-size: 30px;
+}
+#inBtn{
+  background: black;
+  color: white;
+  width: 160px;
+  padding: 20px;
+  vertical-align: center;
+  margin: 0 auto;
+  cursor: pointer;
+}
+#inBtn:hover{
+  background: #333;
+}
